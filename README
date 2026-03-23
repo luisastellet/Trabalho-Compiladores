@@ -1,0 +1,12 @@
+Trabalho de Compiladores
+
+Alunos: Alonso Bassini, Luisa Stellet e Miguel Jehle
+
+Justificativa para o uso da pós-fixada na entrada do algoritmo: No pós fixado, não precisa olhar para frente nem reorganizar a expressão, se achar um número, empilha. Quando achar um operador, desempilha 2 números aí calcula e empilha de novo. Se usar o pré fixado, precisa ler um caratere e olhar pro próximo para saber se vai empilhar ou vai calcular, ou seja, tem que olhar pra frente o que torna mais difícil controlar
+
+Usar '\b' para o caractere espaço. Precisa seprar o espaço em dois tipos: delimitador e caractere
+
+Entrada:
+- A expressão regular será pós fixada
+- Terá um espaço entre cada token, seja ele um operador ou um número
+- A entrada termina com um espaço em branco para indicar que não tem mais o que ler
