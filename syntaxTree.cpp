@@ -11,19 +11,18 @@ class regularExpressionToken{
         // Lógica para criar a árvore de sintaxe a partir da expressão regular
         stack<Node*> pilha;
         // push, top, pop, empty (mostra se ta vazia), size
-        // TODO: Não podemos ler char a char, precisamos ler token a token, ou seja, ler até o próximo espaço
-
+ 
         string reading = "";
         for (size_t i = 0; i < regularExpression.size(); i++) {
-            char c = regularExpression[i];
+            char currentChar = regularExpression[i];
 
-            // Se achar espaço em branco, o que leu antes é um tokem
-            if (c == ' ') {
+            // Se achar espaço em branco ou o final da expressão regular, o que leu antes é um tokem
+            if (currentChar == ' ' || i == regularExpression.size() - 1) {
                 
                 // Se é operador
-                if (isOperator(reading)) {
+                if (isOperator(reading.back())) {
                     // Se for um operando unário
-                    if (IsOperatorUnary(reading)) {
+                    if (IsOperatorUnary(reading.back())) {
                         Node* operand = pilha.top(); 
                         pilha.pop();
                         Node* newNode = new OperativeNodeUnary(reading, operand);
@@ -46,23 +45,23 @@ class regularExpressionToken{
                 reading = "";
             }
             else {
-                reading += c;
+                reading += currentChar;
             }
         }
     }
 
-    bool isOperator(string c) {
+    bool isOperator(char c) {
         // *: zero ou mais ocorrências do elemento anterior
         // +: uma ou mais ocorrências do elemento anterior
         // ?: zero ou uma ocorrência do elemento anterior
         // |: alternância (ou)
         // .: concatenação
-        return c == "*" || c == "+" || c == "?" || c == "|" || c == ".";
+        return c == '*' || c == '+' || c == '?' || c == '|' || c == '.';
     }
 
-    bool IsOperatorUnary(string c) {
+    bool IsOperatorUnary(char c) {
         // *, + e ? são operadores unários, ou seja, só tem um operando
-        return c == "*" || c == "+" || c == "?";
+        return c == '*' || c == '+' || c == '?';
     }
 };
 
@@ -76,6 +75,7 @@ class Node {
     }
 };
 
+// Nós da árvore que representam operadores unários, ou seja, tem um ramo
 class OperativeNodeUnary : public Node {
     Node* operand;
 
@@ -85,21 +85,19 @@ class OperativeNodeUnary : public Node {
     }
 };
 
+// Nós da árvore que representam operadores binários, ou seja, tem dois ramos
 class OperativeNodeBinary : public Node {
-    Node* left;
-    Node* right;
+    Node* leftOperand;
+    Node* rightOperand;
 
     public:
-    OperativeNodeBinary(string c, Node* left, Node* right) : Node(c) {
-        this->left = left;
-        this->right = right;
+    OperativeNodeBinary(string c, Node* leftOperand, Node* rightOperand) : Node(c) {
+        this->leftOperand = leftOperand;
+        this->rightOperand = rightOperand;
     }
 };
 
-
 // TODOZÃO: 
-// - Tratar a leitura da expressaão regular com os espaços em branco
-// - Trocar a variável 'c' nos métodos
 // - Separar as classes em arquivos distintos
-// - Olhar restrição de acesso
-// - Ajeitar para não precisar terminar em espaço em branco as entradas
+// - Olhar restrição de acesso (public, private, protected) das variáveis e métodos
+// - Ajeitar para não precisar terminar em espaço em branco as entradas (ao terminar o arquivo ler o que sobrou do 'reading' e criar um nó para ele)
