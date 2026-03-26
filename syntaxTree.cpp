@@ -96,8 +96,3 @@ class OperativeNodeBinary : public Node {
         this->rightOperand = rightOperand;
     }
 };
-
-// TODOZÃO: 
-// - Separar as classes em arquivos distintos
-// - Olhar restrição de acesso (public, private, protected) das variáveis e métodos
-// - Ajeitar para não precisar terminar em espaço em branco as entradas (ao terminar o arquivo ler o que sobrou do 'reading' e criar um nó para ele)
