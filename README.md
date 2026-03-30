@@ -27,3 +27,9 @@ Usamos notação pós-fixada para facilitar a construção de árvores sintátic
 - Refatorar classes em arquivos separados (modularização)
 - Imprimir a árvore sintática para debug
 - Criação de método de leitura dos arquivos contendo as expressões regulares
+
+
+## Como executar o código
+Compilar: ```g++ syntaxTree.cpp -o arquivo_saida``` 
+
+Executar: ```./arquivo_saida```
