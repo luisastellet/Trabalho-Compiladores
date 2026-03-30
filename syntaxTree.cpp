@@ -80,7 +80,6 @@ public:
             char currentChar = regularExpression[i];
             if (currentChar == ' ') {
                 if (!reading.empty()) {
-                    // process reading
                     if (isOperator(reading)) {
                         if (IsOperatorUnary(reading)) {
                             Node* operand = pilha.top(); 
