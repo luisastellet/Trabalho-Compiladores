@@ -24,10 +24,8 @@ Usamos notação pós-fixada para facilitar a construção de árvores sintátic
   - `regularExpressionToken` (armazena expressão regular em uma árvore)
 
 ## TODO da syntaxTree
-- Refatorar classes em arquivos separados (modularização)
-- Imprimir a árvore sintática para debug
-- Criação de método de leitura dos arquivos contendo as expressões regulares
-
+- Modularizar o código do autômato (função para cada tipo de operador)
+- Renomear as variáveis f, n, eps, nR, nL (final_state, number_of_states, alphabetSize, ... , ...)
 
 ## Como executar o código
 Compilar: ```g++ syntaxTree.cpp -o arquivo_saida``` 
