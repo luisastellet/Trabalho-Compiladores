@@ -3,14 +3,113 @@
 #include <map>
 #include <set>
 #include <string>
+#include <iomanip>
 #include "syntaxTree.hpp"
+#include <queue>
+#include <unordered_map>
 using namespace std;
+
+struct DFA {
+	int start;
+	set<int> finals;
+	vector<vector<int>> transitions;
+};
 
 struct NFA {
 	int start;
 	int end;
 	vector<vector<set<int>>> transitions; 
 };
+
+// Calcula o delta do estado
+set<int> delta(const NFA& nfa, const set<int>& states, int epsIdx) {
+	set<int> closure = states;
+	queue<int> queue;
+	for (int state : states) queue.push(state);
+	while (!queue.empty()) {
+		int initialState = queue.front(); 
+		queue.pop();
+		for (int next : nfa.transitions[initialState][epsIdx]) {
+			if (!closure.count(next)) {
+				closure.insert(next);
+				queue.push(next);
+			}
+		}
+	}
+	return closure;
+}
+
+DFA NFAtoDFA(const NFA& nfa, const vector<string>& alphabet) {
+	int epsIdx = alphabet.size();
+	map<set<int>, int> stateMap;
+	vector<set<int>> dfaStates;
+	vector<vector<int>> dfaTransictions;
+	set<int> finals;
+	int dfaStateCount = 0;
+
+	// Estado inicial do DFA é o fecho-ε do estado inicial do NFA
+	set<int> startSet = delta(nfa, {nfa.start}, epsIdx);
+	// Mapear o estado inicial para o índice 0 do DFA
+	stateMap[startSet] = dfaStateCount++;
+	// Adicionar o estado inicial à lista de estados do DFA
+	dfaStates.push_back(startSet);
+	// Inicializar a matriz de transições do DFA com -1 (indicando ausência de transição)
+	dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
+
+	// Processar os estados do DFA usando uma fila para explorar os estados alcançáveis
+	queue<set<int>> queue;
+	queue.push(startSet);
+
+	while (!queue.empty()) {
+		set<int> current = queue.front(); 
+		queue.pop();
+		int currentIdx = stateMap[current];
+		for (size_t a = 0; a < alphabet.size(); ++a) {
+			set<int> moveSet;
+			for (int state : current) {
+				for (int next : nfa.transitions[state][a]) {
+					moveSet.insert(next);
+				}
+			}
+			set<int> closure = delta(nfa, moveSet, epsIdx);
+			if (closure.empty()) continue;
+			if (!stateMap.count(closure)) {
+				stateMap[closure] = dfaStateCount++;
+				dfaStates.push_back(closure);
+				dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
+				queue.push(closure);
+			}
+			dfaTransictions[currentIdx][a] = stateMap[closure];
+		}
+	}
+
+	for (size_t i = 0; i < dfaStates.size(); ++i) {
+		if (dfaStates[i].count(nfa.end)) finals.insert(i);
+	}
+
+	DFA dfa = {0, finals, dfaTransictions};
+	return dfa;
+}
+
+void printDFA(const DFA& dfa, const vector<string>& alphabet) {
+	cout << "Matriz de transições do Autômato Finito Determinístico:" << endl;
+	cout << left << setw(10) << "Estado";
+	for (const auto& sym : alphabet) cout << left << setw(12) << sym;
+	cout << endl;
+	for (size_t i = 0; i < dfa.transitions.size(); ++i) {
+		cout << left << setw(10) << i;
+		for (size_t j = 0; j < alphabet.size(); ++j) {
+			string cell;
+			if (dfa.transitions[i][j] == -1) cell = "-";
+			else cell = to_string(dfa.transitions[i][j]);
+			cout << left << setw(12) << cell;
+		}
+		cout << endl;
+	}
+	cout << "Estado inicial: " << dfa.start << "\nEstados finais: ";
+	for (int f : dfa.finals) cout << f << " ";
+	cout << endl << endl;
+}
 
 // mapear símbolos para índices de coluna na matriz
 vector<string> getAlphabet(Node* node, set<string>& symbols) {
@@ -184,26 +283,28 @@ NFA buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 }
 
 // imprimir a matriz do AFN que foi gerada
-void printNFAMatrix(const NFA& nfa, const vector<string>& alphabet) {
-	cout << "Matriz de transições (AFN):\n";
-	cout << "Estados\\Símbolo\t";
-	for (const auto& startState : alphabet) cout << startState << "\t";
-	cout << "ε\n";
+void printNFA(const NFA& nfa, const vector<string>& alphabet) {
+	cout << "Matriz de transições do Autômato Finito Não Determinístico:" << endl;
+	cout << left << setw(10) << "Estado";
+	for (const auto& sym : alphabet) cout << left << setw(12) << sym;
+	cout << left << setw(12) << "ε" << endl;
 	for (size_t i = 0; i < nfa.transitions.size(); ++i) {
-		cout << i << "\t\t";
+		cout << left << setw(10) << i;
 		for (size_t j = 0; j < alphabet.size() + 1; ++j) {
-			cout << "{";
+			string cell = "";
 			bool first = true;
 			for (int st : nfa.transitions[i][j]) {
-				if (!first) cout << ",";
-				cout << st;
+				if (!first) cell += ",";
+				cell += to_string(st);
 				first = false;
 			}
-			cout << "}\t";
+			if (cell == "") cell = "-";
+			cout << left << setw(12) << cell;
 		}
-		cout << "\n";
+		cout << endl;
 	}
-	cout << "Estado inicial: " << nfa.start << ", final: " << nfa.end << endl;
+	cout << "Estado inicial: " << nfa.start << "\nEstado final: " << nfa.end << endl;
+	cout << endl;
 }
 
 
@@ -222,13 +323,15 @@ int main() {
 		vector<string> alphabet = getAlphabet(tree, symbols);
 		int stateCount = 0;
 		try {
+			printTree(tree);
 			NFA nfa = buildNFA(tree, alphabet, stateCount);
-			printNFAMatrix(nfa, alphabet);
+			printNFA(nfa, alphabet);
+			DFA dfa = NFAtoDFA(nfa, alphabet);
+			printDFA(dfa, alphabet);
 		} catch (const exception& e) {
-			cout << "Erro ao construir AFN: " << e.what() << endl;
+			cout << "Erro ao construir AFN/DFA: " << e.what() << endl;
 		}
 		delete tree;
-		cout << "-----------------------------" << endl;
 	}
 	return 0;
 }
