@@ -154,4 +154,5 @@ void printTree(Node* root) {
     if (root) {
         root->print(0);
     }
+    printf("\n");
 }

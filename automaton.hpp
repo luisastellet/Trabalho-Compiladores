@@ -25,6 +25,7 @@ NFA buildNFA(Node* node, std::vector<std::string>& alphabet, int& stateCount);
 void printNFAMatrix(const NFA& nfa, const std::vector<std::string>& alphabet);
 
 DFA NFAtoDFA(const NFA& nfa, const std::vector<std::string>& alphabet);
+DFA minimizeDFA(const DFA& dfa, const std::vector<std::string>& alphabet);
 void printDFAMatrix(const DFA& dfa, const std::vector<std::string>& alphabet);
 
-#endif 
+#endif

@@ -107,21 +107,88 @@ void printDFA(const DFA& dfa, const vector<string>& alphabet) {
 		cout << endl;
 	}
 	cout << "Estado inicial: " << dfa.start << "\nEstados finais: ";
-	for (int f : dfa.finals) {
-		cout << f << " ";
-		// Verifica se há transições saindo de um estado final
-		bool hasTransitions = false;
-		for (size_t j = 0; j < alphabet.size(); ++j) {
-			if (dfa.transitions[f][j] != -1) {
-				hasTransitions = true;
-				break;
+	for (int f : dfa.finals) cout << f << " ";
+	cout << endl << endl;
+}
+
+// Minimizar DFA usando algoritmo de particionamento
+DFA minimizeDFA(const DFA& dfa, const vector<string>& alphabet) {
+	int n = dfa.transitions.size();
+	
+	// Partição inicial: estados finais vs não-finais
+	vector<int> partition(n);
+	for (int i = 0; i < n; ++i) {
+		//
+		partition[i] = dfa.finals.count(i) ? 1 : 0;
+	}
+	
+	bool changed = true;
+	while (changed) {
+		changed = false;
+		map<vector<int>, int> signature;
+		vector<int> newPartition(n);
+		int partNum = 0;
+		
+		// Para cada estado, criar uma assinatura baseada em: (partição atual, transições)
+		for (int i = 0; i < n; ++i) {
+			vector<int> sig;
+			sig.push_back(partition[i]);  // partição atual do estado
+			
+			// Assinatura: a que partição cada transição leva
+			for (size_t j = 0; j < alphabet.size(); ++j) {
+				if (dfa.transitions[i][j] == -1) {
+					sig.push_back(-1);  // sem transição
+				} else {
+					sig.push_back(partition[dfa.transitions[i][j]]);
+				}
 			}
+			
+			if (signature.find(sig) == signature.end()) {
+				signature[sig] = partNum++;
+			}
+			newPartition[i] = signature[sig];
 		}
-		if (hasTransitions) {
-			cout << "[AVISO: tem transições saindo!] ";
+		
+		if (newPartition != partition) {
+			changed = true;
+			partition = newPartition;
 		}
 	}
-	cout << endl << endl;
+	
+	// Mapear estados antigos para novos
+	map<int, int> stateMap;
+	int newStateNum = 0;
+	for (int i = 0; i < n; ++i) {
+		if (stateMap.find(partition[i]) == stateMap.end()) {
+			stateMap[partition[i]] = newStateNum++;
+		}
+	}
+	
+	// Construir novo DFA
+	int newStart = stateMap[partition[dfa.start]];
+	set<int> newFinals;
+	for (int f : dfa.finals) {
+		newFinals.insert(stateMap[partition[f]]);
+	}
+	
+	// Nova matriz de transições
+	vector<vector<int>> newTransitions(newStateNum, vector<int>(alphabet.size(), -1));
+	set<pair<int,int>> addedTransitions;  // evitar duplicatas
+	
+	for (int i = 0; i < n; ++i) {
+		int newI = stateMap[partition[i]];
+		for (size_t j = 0; j < alphabet.size(); ++j) {
+			if (dfa.transitions[i][j] != -1) {
+				int newJ_target = stateMap[partition[dfa.transitions[i][j]]];
+				if (addedTransitions.find({newI, j}) == addedTransitions.end()) {
+					newTransitions[newI][j] = newJ_target;
+					addedTransitions.insert({newI, j});
+				}
+			}
+		}
+	}
+	
+	return {newStart, newFinals, newTransitions};
 }
 
 // mapear símbolos para índices de coluna na matriz
@@ -148,8 +215,6 @@ NFA transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stateCoun
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
-	cout << "[KLEENE*] Child: start=" << nfaChild.start << " end=" << nfaChild.end << " size=" << n 
-	     << " | New: start=" << startState << " end=" << f << endl;
 	// Liga novo início
 	transitions[startState][eps].insert(nfaChild.start);
 	// Liga novo início para novo fim (caso zero ocorrências)
@@ -170,8 +235,6 @@ NFA transictionPlus(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
-	cout << "[PLUS+] Child: start=" << nfaChild.start << " end=" << nfaChild.end << " size=" << n 
-	     << " | New: start=" << startState << " end=" << f << endl;
 	// Liga novo início para início do filho
 	transitions[startState][eps].insert(nfaChild.start);
 	// Liga fim do filho para início (loop)
@@ -190,8 +253,6 @@ NFA transictionQuestion (NFA nfaChild, vector<string>& alphabet, int& stateCount
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
-	cout << "[QUESTION?] Child: start=" << nfaChild.start << " end=" << nfaChild.end << " size=" << n 
-	     << " | New: start=" << startState << " end=" << f << endl;
 	// Liga novo início para início do filho
 	transitions[startState][eps].insert(nfaChild.start);
 	// Liga novo início para novo fim 
@@ -205,8 +266,6 @@ NFA transictionQuestion (NFA nfaChild, vector<string>& alphabet, int& stateCount
 
 NFA transictionConcatenate (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
 	int offset = left.transitions.size();
-	cout << "[CONCAT .] Left: start=" << left.start << " end=" << left.end << " size=" << left.transitions.size() 
-	     << " | Right: start=" << right.start << " end=" << right.end << " size=" << right.transitions.size() << endl;
 	vector<vector<set<int>>> transitions(left.transitions);
 	for (auto& row : right.transitions) {
 		vector<set<int>> newRow(row);
@@ -222,13 +281,10 @@ NFA transictionConcatenate (NFA left, NFA right, vector<string>& alphabet, int& 
 	transitions[left.end][eps].insert(right.start + offset);
 	stateCount = transitions.size();  // atualiza o contador global
 	NFA nfa = {left.start, right.end + offset, transitions};
-	cout << "  Result: start=" << nfa.start << " end=" << nfa.end << " total_states=" << transitions.size() << endl;
 	return nfa;
 }
 
 NFA transictionPipe (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
-	cout << "[PIPE |] Left: start=" << left.start << " end=" << left.end << " size=" << left.transitions.size() 
-	     << " | Right: start=" << right.start << " end=" << right.end << " size=" << right.transitions.size() << endl;
 	int startState = stateCount++;
 	int f = stateCount++;
 	int offsetL = 1;
@@ -256,7 +312,6 @@ NFA transictionPipe (NFA left, NFA right, vector<string>& alphabet, int& stateCo
 	transitions[right.end + offsetR][eps].insert(f);
 	stateCount = transitions.size();  // atualiza o contador global
 	NFA nfa = {startState, f, transitions};
-	cout << "  Result: start=" << nfa.start << " end=" << nfa.end << " total_states=" << transitions.size() << endl;
 	return nfa;
 }
 
@@ -307,13 +362,10 @@ NFA buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 	}
 	if (idx == -1 && node->getValue() != "ε" && node->getValue() != "epsilon")
 		throw runtime_error("Símbolo desconhecido: " + node->getValue());
-	if (idx != -1) {
+	if (idx != -1)
 		transitions[startState][idx].insert(f);
-		cout << "[SYMBOL] '" << node->getValue() << "' (idx=" << idx << "): " << startState << " -> " << f << endl;
-	} else {
+	else 
 		transitions[startState][alphabet.size()].insert(f);
-		cout << "[EPSILON] ε: " << startState << " -> " << f << endl;
-	}
 	NFA nfa = {startState, f, transitions};
 	return nfa;
 }
@@ -353,7 +405,9 @@ int main() {
 	}
 
 	for (const auto& line : lines) {
+		cout << string(80, '=') << endl;
 		cout << "Expressão regular: " << line << endl;
+		cout << string(80, '=') << endl;
 		Node* tree = ret.createSyntaxTree(line);
 		set<string> symbols;
 		vector<string> alphabet = getAlphabet(tree, symbols);
@@ -363,11 +417,16 @@ int main() {
 			NFA nfa = buildNFA(tree, alphabet, stateCount);
 			printNFA(nfa, alphabet);
 			DFA dfa = NFAtoDFA(nfa, alphabet);
+			cout << ">>> DFA ORIGINAL:" << endl;
 			printDFA(dfa, alphabet);
+			DFA dfaMin = minimizeDFA(dfa, alphabet);
+			cout << ">>> DFA MINIMIZADO:" << endl;
+			printDFA(dfaMin, alphabet);
 		} catch (const exception& e) {
 			cout << "Erro ao construir AFN/DFA: " << e.what() << endl;
 		}
 		delete tree;
 	}
+	cout << string(80, '=') << endl;
 	return 0;
 }
