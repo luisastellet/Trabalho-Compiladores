@@ -208,6 +208,56 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 	return vector<string>(symbols.begin(), symbols.end());
 }
 
+// Forward declaration
+NFA transictionPipe(NFA left, NFA right, vector<string>& alphabet, int& stateCount);
+
+// Converter DFA para NFA (trivial - DFA é um NFA com transições determinísticas)
+// Nota: expande para o alfabeto fornecido (que pode ser maior que o original do DFA)
+NFA DFAtoNFA(const DFA& dfa, const vector<string>& alphabet) {
+	int n = dfa.transitions.size();
+	vector<vector<set<int>>> nfaTransitions(n, vector<set<int>>(alphabet.size() + 1));
+	
+	// Copiar transições do DFA para NFA
+	// O DFA original pode ter um alfabeto menor, então precisamos apenas copiar o que existe
+	for (int i = 0; i < n; ++i) {
+		for (size_t j = 0; j < dfa.transitions[i].size(); ++j) {
+			if (j < alphabet.size() && dfa.transitions[i][j] != -1) {
+				nfaTransitions[i][j].insert(dfa.transitions[i][j]);
+			}
+		}
+	}
+	
+	// NFA tem um único estado final (pegar o primeiro final - em caso de múltiplos, pegar qualquer um)
+	int endState = *dfa.finals.begin();
+	
+	return {dfa.start, endState, nfaTransitions};
+}
+
+// União direta de múltiplos DFAs (mais eficiente)
+DFA unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int& stateCount) {
+	if (dfas.empty()) throw runtime_error("Nenhum DFA fornecido para união");
+	if (dfas.size() == 1) return dfas[0];
+	
+	// Converter para NFAs primeiro
+	// IMPORTANTE: cada NFA pode ter tamanho diferente dependendo de seus símbolos
+	vector<NFA> nfas;
+	for (const auto& dfa : dfas) {
+		// Para cada DFA, usar o alfabeto global (que inclui TODOS os símbolos)
+		NFA nfa = DFAtoNFA(dfa, alphabet);
+		nfas.push_back(nfa);
+	}
+	
+	// Combinar NFAs usando PIPE
+	NFA resultNFA = nfas[0];
+	vector<string> mutableAlphabet = alphabet;
+	for (size_t i = 1; i < nfas.size(); ++i) {
+		resultNFA = transictionPipe(resultNFA, nfas[i], mutableAlphabet, stateCount);
+	}
+	
+	// Converter resultado para DFA
+	return NFAtoDFA(resultNFA, alphabet);
+}
+
 NFA transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
 	int n = nfaChild.transitions.size();
 	int startState = n;  // novo início é logo após o child
@@ -404,6 +454,9 @@ int main() {
 		return 1;
 	}
 
+	vector<DFA> minimizedDFAs;
+	set<string> globalSymbols;
+	
 	for (const auto& line : lines) {
 		cout << string(80, '=') << endl;
 		cout << "Expressão regular: " << line << endl;
@@ -411,6 +464,7 @@ int main() {
 		Node* tree = ret.createSyntaxTree(line);
 		set<string> symbols;
 		vector<string> alphabet = getAlphabet(tree, symbols);
+		globalSymbols.insert(symbols.begin(), symbols.end());
 		int stateCount = 0;
 		try {
 			printTree(tree);
@@ -422,11 +476,29 @@ int main() {
 			DFA dfaMin = minimizeDFA(dfa, alphabet);
 			cout << ">>> DFA MINIMIZADO:" << endl;
 			printDFA(dfaMin, alphabet);
+			minimizedDFAs.push_back(dfaMin);
 		} catch (const exception& e) {
 			cout << "Erro ao construir AFN/DFA: " << e.what() << endl;
 		}
 		delete tree;
 	}
+	
+	// União de todos os DFAs minimizados
+	if (minimizedDFAs.size() > 1) {
+		cout << string(80, '=') << endl;
+		cout << "AUTÔMATO FINAL - UNIÃO DE TODOS OS TOKENS:" << endl;
+		cout << string(80, '=') << endl;
+		try {
+			vector<string> globalAlphabet(globalSymbols.begin(), globalSymbols.end());
+			int stateCount = 0;
+			DFA dfaUnion = unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
+			cout << ">>> DFA DA UNIÃO (sem minimizar - preserva contexto dos tokens):" << endl;
+			printDFA(dfaUnion, globalAlphabet);
+		} catch (const exception& e) {
+			cout << "Erro ao unir DFAs: " << e.what() << endl;
+		}
+	}
+	
 	cout << string(80, '=') << endl;
 	return 0;
 }

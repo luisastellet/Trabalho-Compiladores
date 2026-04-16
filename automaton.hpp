@@ -26,6 +26,8 @@ void printNFAMatrix(const NFA& nfa, const std::vector<std::string>& alphabet);
 
 DFA NFAtoDFA(const NFA& nfa, const std::vector<std::string>& alphabet);
 DFA minimizeDFA(const DFA& dfa, const std::vector<std::string>& alphabet);
+NFA DFAtoNFA(const DFA& dfa, const std::vector<std::string>& alphabet);
+DFA unionDFAs(const std::vector<DFA>& dfas, const std::vector<std::string>& alphabet, int& stateCount);
 void printDFAMatrix(const DFA& dfa, const std::vector<std::string>& alphabet);
 
 #endif
