@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra -g
 TARGET = automaton
-SRC = automaton.cpp syntaxTree.cpp
+SRC = automaton.cpp syntaxTree.cpp dfa.cpp nfa.cpp
 
 all: $(TARGET)
 
