@@ -9,187 +9,388 @@
 #include <unordered_map>
 using namespace std;
 
-struct DFA {
-	int start;
-	set<int> finals;
-	vector<vector<int>> transitions;
-};
+// Forward declaration
+class NFA;
 
-struct NFA {
-	int start;
-	int end;
-	vector<vector<set<int>>> transitions; 
-};
+class DFA {
+	public:
+		int start;
+		set<int> finals;
+		vector<vector<int>> transitions;
 
-// Calcula o delta do estado
-set<int> delta(const NFA& nfa, const set<int>& states, int epsIdx) {
-	set<int> closure = states;
-	queue<int> queue;
-	for (int state : states) queue.push(state);
-	while (!queue.empty()) {
-		int initialState = queue.front(); 
-		queue.pop();
-		for (int next : nfa.transitions[initialState][epsIdx]) {
-			if (!closure.count(next)) {
-				closure.insert(next);
-				queue.push(next);
+		// Minimizar DFA usando algoritmo de particionamento
+		void minimize(const vector<string>& alphabet) {
+			int n = this->transitions.size();
+			
+			// Partição inicial: estados finais vs não-finais
+			vector<int> partition(n);
+			for (int i = 0; i < n; ++i) {
+				//
+				partition[i] = this->finals.count(i) ? 1 : 0;
 			}
-		}
-	}
-	return closure;
-}
-
-DFA NFAtoDFA(const NFA& nfa, const vector<string>& alphabet) {
-	int epsIdx = alphabet.size();
-	map<set<int>, int> stateMap;
-	vector<set<int>> dfaStates;
-	vector<vector<int>> dfaTransictions;
-	set<int> finals;
-	int dfaStateCount = 0;
-
-	// Estado inicial do DFA é o fecho-ε do estado inicial do NFA
-	set<int> startSet = delta(nfa, {nfa.start}, epsIdx);
-	// Mapear o estado inicial para o índice 0 do DFA
-	stateMap[startSet] = dfaStateCount++;
-	// Adicionar o estado inicial à lista de estados do DFA
-	dfaStates.push_back(startSet);
-	// Inicializar a matriz de transições do DFA com -1 (indicando ausência de transição)
-	dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
-
-	// Processar os estados do DFA usando uma fila para explorar os estados alcançáveis
-	queue<set<int>> queue;
-	queue.push(startSet);
-
-	while (!queue.empty()) {
-		set<int> current = queue.front(); 
-		queue.pop();
-		int currentIdx = stateMap[current];
-		for (size_t a = 0; a < alphabet.size(); ++a) {
-			set<int> moveSet;
-			for (int state : current) {
-				for (int next : nfa.transitions[state][a]) {
-					moveSet.insert(next);
+			
+			bool changed = true;
+			while (changed) {
+				changed = false;
+				map<vector<int>, int> signature;
+				vector<int> newPartition(n);
+				int partNum = 0;
+				
+				// Para cada estado, criar uma assinatura baseada em: (partição atual, transições)
+				for (int i = 0; i < n; ++i) {
+					vector<int> sig;
+					sig.push_back(partition[i]);  // partição atual do estado
+					
+					// Assinatura: a que partição cada transição leva
+					for (size_t j = 0; j < alphabet.size(); ++j) {
+						if (this->transitions[i][j] == -1) {
+							sig.push_back(-1);  // sem transição
+						} else {
+							sig.push_back(partition[this->transitions[i][j]]);
+						}
+					}
+					
+					if (signature.find(sig) == signature.end()) {
+						signature[sig] = partNum++;
+					}
+					newPartition[i] = signature[sig];
+				}
+				
+				if (newPartition != partition) {
+					changed = true;
+					partition = newPartition;
 				}
 			}
-			set<int> closure = delta(nfa, moveSet, epsIdx);
-			if (closure.empty()) continue;
-			if (!stateMap.count(closure)) {
-				stateMap[closure] = dfaStateCount++;
-				dfaStates.push_back(closure);
-				dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
-				queue.push(closure);
-			}
-			dfaTransictions[currentIdx][a] = stateMap[closure];
-		}
-	}
-
-	for (size_t i = 0; i < dfaStates.size(); ++i) {
-		if (dfaStates[i].count(nfa.end)) finals.insert(i);
-	}
-
-	DFA dfa = {0, finals, dfaTransictions};
-	return dfa;
-}
-
-void printDFA(const DFA& dfa, const vector<string>& alphabet) {
-	cout << "Matriz de transições do Autômato Finito Determinístico:" << endl;
-	cout << left << setw(10) << "Estado";
-	for (const auto& sym : alphabet) cout << left << setw(12) << sym;
-	cout << endl;
-	for (size_t i = 0; i < dfa.transitions.size(); ++i) {
-		cout << left << setw(10) << i;
-		for (size_t j = 0; j < alphabet.size(); ++j) {
-			string cell;
-			if (dfa.transitions[i][j] == -1) cell = "-";
-			else cell = to_string(dfa.transitions[i][j]);
-			cout << left << setw(12) << cell;
-		}
-		cout << endl;
-	}
-	cout << "Estado inicial: " << dfa.start << "\nEstados finais: ";
-	for (int f : dfa.finals) cout << f << " ";
-	cout << endl << endl;
-}
-
-// Minimizar DFA usando algoritmo de particionamento
-DFA minimizeDFA(const DFA& dfa, const vector<string>& alphabet) {
-	int n = dfa.transitions.size();
-	
-	// Partição inicial: estados finais vs não-finais
-	vector<int> partition(n);
-	for (int i = 0; i < n; ++i) {
-		//
-		partition[i] = dfa.finals.count(i) ? 1 : 0;
-	}
-	
-	bool changed = true;
-	while (changed) {
-		changed = false;
-		map<vector<int>, int> signature;
-		vector<int> newPartition(n);
-		int partNum = 0;
-		
-		// Para cada estado, criar uma assinatura baseada em: (partição atual, transições)
-		for (int i = 0; i < n; ++i) {
-			vector<int> sig;
-			sig.push_back(partition[i]);  // partição atual do estado
 			
-			// Assinatura: a que partição cada transição leva
-			for (size_t j = 0; j < alphabet.size(); ++j) {
-				if (dfa.transitions[i][j] == -1) {
-					sig.push_back(-1);  // sem transição
+			// Mapear estados antigos para novos
+			map<int, int> stateMap;
+			int newStateNum = 0;
+			for (int i = 0; i < n; ++i) {
+				if (stateMap.find(partition[i]) == stateMap.end()) {
+					stateMap[partition[i]] = newStateNum++;
+				}
+			}
+			
+			// Construir novo DFA
+			int newStart = stateMap[partition[this->start]];
+			set<int> newFinals;
+			for (int f : this->finals) {
+				newFinals.insert(stateMap[partition[f]]);
+			}
+			
+			// Nova matriz de transições
+			vector<vector<int>> newTransitions(newStateNum, vector<int>(alphabet.size(), -1));
+			set<pair<int,int>> addedTransitions;  // evitar duplicatas
+			
+			for (int i = 0; i < n; ++i) {
+				int newI = stateMap[partition[i]];
+				for (size_t j = 0; j < alphabet.size(); ++j) {
+					if (this->transitions[i][j] != -1) {
+						int newJ_target = stateMap[partition[this->transitions[i][j]]];
+						if (addedTransitions.find({newI, j}) == addedTransitions.end()) {
+							newTransitions[newI][j] = newJ_target;
+							addedTransitions.insert({newI, j});
+						}
+					}
+				}
+			}
+			
+			this->start = newStart;
+			this->finals = newFinals;
+			this->transitions = newTransitions;
+		}
+
+		void printDFA(const vector<string>& alphabet) const {
+			cout << "Matriz de transições do Autômato Finito Determinístico:" << endl;
+			cout << left << setw(10) << "Estado";
+			for (const auto& sym : alphabet) cout << left << setw(12) << sym;
+			cout << endl;
+			for (size_t i = 0; i < this->transitions.size(); ++i) {
+				cout << left << setw(10) << i;
+				for (size_t j = 0; j < alphabet.size(); ++j) {
+					string cell;
+					if (this->transitions[i][j] == -1) cell = "-";
+					else cell = to_string(this->transitions[i][j]);
+					cout << left << setw(12) << cell;
+				}
+				cout << endl;
+			}
+			cout << "Estado inicial: " << this->start << "\nEstados finais: ";
+			for (int f : this->finals) cout << f << " ";
+			cout << endl << endl;
+		}
+
+		// União direta de múltiplos DFAs (mais eficiente)
+		static DFA unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int& stateCount) {
+			// 
+			return {};
+		}
+};
+
+class NFA {
+	private:
+		// Calcula o delta do estado
+		set<int> delta(const set<int>& states, int epsIdx) const {
+			set<int> closure = states;
+			queue<int> queue;
+			for (int state : states) queue.push(state);
+			while (!queue.empty()) {
+				int initialState = queue.front(); 
+				queue.pop();
+				for (int next : this->transitions[initialState][epsIdx]) {
+					if (!closure.count(next)) {
+						closure.insert(next);
+						queue.push(next);
+					}
+				}
+			}
+			return closure;
+		}
+
+		static NFA transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
+			int n = nfaChild.transitions.size();
+			int startState = n;  // novo início é logo após o child
+			int f = n + 1;      // novo fim é logo após o novo início
+			vector<vector<set<int>>> transitions = nfaChild.transitions;
+			transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
+			int eps = alphabet.size();
+			// Liga novo início
+			transitions[startState][eps].insert(nfaChild.start);
+			// Liga novo início para novo fim (caso zero ocorrências)
+			transitions[startState][eps].insert(f);
+			// Liga fim do filho para início (loop)
+			transitions[nfaChild.end][eps].insert(nfaChild.start);
+			// Liga fim do filho para novo fim
+			transitions[nfaChild.end][eps].insert(f);
+			stateCount = f + 1;  // atualiza o contador global
+			NFA nfa = {startState, f, transitions};
+			return nfa;
+		}
+
+		static NFA transictionPlus(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
+			int n = nfaChild.transitions.size();
+			int startState = n;  // novo início é logo após o child
+			int f = n + 1;      // novo fim é logo após o novo início
+			vector<vector<set<int>>> transitions = nfaChild.transitions;
+			transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
+			int eps = alphabet.size();
+			// Liga novo início para início do filho
+			transitions[startState][eps].insert(nfaChild.start);
+			// Liga fim do filho para início (loop)
+			transitions[nfaChild.end][eps].insert(nfaChild.start);
+			// Liga fim do filho para novo fim
+			transitions[nfaChild.end][eps].insert(f);
+			stateCount = f + 1;  // atualiza o contador global
+			NFA nfa = {startState, f, transitions};
+			return nfa;
+		}
+
+		static NFA transictionQuestion (NFA nfaChild, vector<string>& alphabet, int& stateCount) {
+			int n = nfaChild.transitions.size();
+			int startState = n;  // novo início é logo após o child
+			int f = n + 1;      // novo fim é logo após o novo início
+			vector<vector<set<int>>> transitions = nfaChild.transitions;
+			transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
+			int eps = alphabet.size();
+			// Liga novo início para início do filho
+			transitions[startState][eps].insert(nfaChild.start);
+			// Liga novo início para novo fim 
+			transitions[startState][eps].insert(f);
+			// Liga fim do filho para novo fim
+			transitions[nfaChild.end][eps].insert(f);
+			stateCount = f + 1;  // atualiza o contador global
+			NFA nfa = {startState, f, transitions};
+			return nfa;
+		}
+
+		static NFA transictionConcatenate (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
+			int offset = left.transitions.size();
+			vector<vector<set<int>>> transitions(left.transitions);
+			for (auto& row : right.transitions) {
+				vector<set<int>> newRow(row);
+				for (auto& startState : newRow) {
+					set<int> newSet;
+					for (int st : startState) newSet.insert(st + offset);
+					startState = newSet;
+				}
+				transitions.push_back(newRow);
+			}
+			int eps = alphabet.size();
+			// Liga fim do left para início do right
+			transitions[left.end][eps].insert(right.start + offset);
+			stateCount = transitions.size();  // atualiza o contador global
+			NFA nfa = {left.start, right.end + offset, transitions};
+			return nfa;
+		}
+
+		static NFA transictionPipe (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
+			int startState = stateCount++;
+			int f = stateCount++;
+			int offsetL = 1;
+			int offsetR = left.transitions.size() + 1;
+			int nL = left.transitions.size();
+			int nR = right.transitions.size();
+			int total = nL + nR + 2;
+			vector<vector<set<int>>> transitions(total, vector<set<int>>(alphabet.size() + 1));
+			int eps = alphabet.size();
+			for (int i = 0; i < nL; ++i)
+				for (size_t j = 0; j < alphabet.size() + 1; ++j)
+					for (int st : left.transitions[i][j])
+						transitions[i + offsetL][j].insert(st + offsetL);
+			for (int i = 0; i < nR; ++i)
+				for (size_t j = 0; j < alphabet.size() + 1; ++j)
+					for (int st : right.transitions[i][j])
+						transitions[i + offsetR][j].insert(st + offsetR);
+			// Liga novo início
+			transitions[startState][eps].insert(left.start + offsetL);
+			// Liga novo início para início do right
+			transitions[startState][eps].insert(right.start + offsetR);
+			// Liga finais
+			transitions[left.end + offsetL][eps].insert(f);
+			// Liga fim do right para novo fim
+			transitions[right.end + offsetR][eps].insert(f);
+			stateCount = transitions.size();  // atualiza o contador global
+			NFA nfa = {startState, f, transitions};
+			return nfa;
+		}
+
+	public:
+		int start;
+		int end;
+		vector<vector<set<int>>> transitions; 
+
+		DFA toDFA(const vector<string>& alphabet) const {
+			int epsIdx = alphabet.size();
+			map<set<int>, int> stateMap;
+			vector<set<int>> dfaStates;
+			vector<vector<int>> dfaTransictions;
+			set<int> finals;
+			int dfaStateCount = 0;
+
+			// Estado inicial do DFA é o fecho-ε do estado inicial do NFA
+			set<int> startSet = delta({this->start}, epsIdx);
+			// Mapear o estado inicial para o índice 0 do DFA
+			stateMap[startSet] = dfaStateCount++;
+			// Adicionar o estado inicial à lista de estados do DFA
+			dfaStates.push_back(startSet);
+			// Inicializar a matriz de transições do DFA com -1 (indicando ausência de transição)
+			dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
+
+			// Processar os estados do DFA usando uma fila para explorar os estados alcançáveis
+			queue<set<int>> queue;
+			queue.push(startSet);
+
+			while (!queue.empty()) {
+				set<int> current = queue.front(); 
+				queue.pop();
+				int currentIdx = stateMap[current];
+				for (size_t a = 0; a < alphabet.size(); ++a) {
+					set<int> moveSet;
+					for (int state : current) {
+						for (int next : this->transitions[state][a]) {
+							moveSet.insert(next);
+						}
+					}
+					set<int> closure = delta(moveSet, epsIdx);
+					if (closure.empty()) continue;
+					if (!stateMap.count(closure)) {
+						stateMap[closure] = dfaStateCount++;
+						dfaStates.push_back(closure);
+						dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
+						queue.push(closure);
+					}
+					dfaTransictions[currentIdx][a] = stateMap[closure];
+				}
+			}
+
+			for (size_t i = 0; i < dfaStates.size(); ++i) {
+				if (dfaStates[i].count(this->end)) finals.insert(i);
+			}
+
+			DFA dfa = {0, finals, dfaTransictions};
+			return dfa;
+		}
+
+		// imprimir a matriz do AFN que foi gerada
+		void printNFA(const vector<string>& alphabet) const {
+			cout << "Matriz de transições do Autômato Finito Não Determinístico:" << endl;
+			cout << left << setw(10) << "Estado";
+			for (const auto& sym : alphabet) cout << left << setw(12) << sym;
+			cout << left << setw(12) << "ε" << endl;
+			for (size_t i = 0; i < this->transitions.size(); ++i) {
+				cout << left << setw(10) << i;
+				for (size_t j = 0; j < alphabet.size() + 1; ++j) {
+					string cell = "";
+					bool first = true;
+					for (int st : this->transitions[i][j]) {
+						if (!first) cell += ",";
+						cell += to_string(st);
+						first = false;
+					}
+					if (cell == "") cell = "-";
+					cout << left << setw(12) << cell;
+				}
+				cout << endl;
+			}
+			cout << "Estado inicial: " << this->start << "\nEstado final: " << this->end << endl;
+			cout << endl;
+		}
+
+		// construir o AFN a partir da syntax tree
+		static NFA buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
+			if (!node) throw runtime_error("Nó nulo na árvore sintática");
+			// Operador unário
+			if (dynamic_cast<OperativeNodeUnary*>(node)) {
+				OperativeNodeUnary* u = static_cast<OperativeNodeUnary*>(node);
+				NFA nfaChild = buildNFA(u->getOperand(), alphabet, stateCount);
+				if (node->getValue() == "*") { 
+					return transictionKleeneStar(nfaChild, alphabet, stateCount);
+					
+				} else if (node->getValue() == "+") { 
+					return transictionPlus(nfaChild, alphabet, stateCount);
+					
+				} else if (node->getValue() == "?") { 
+					return transictionQuestion (nfaChild, alphabet, stateCount);
+					
 				} else {
-					sig.push_back(partition[dfa.transitions[i][j]]);
+					throw runtime_error("Operador unário desconhecido: " + node->getValue());
 				}
 			}
-			
-			if (signature.find(sig) == signature.end()) {
-				signature[sig] = partNum++;
-			}
-			newPartition[i] = signature[sig];
-		}
-		
-		if (newPartition != partition) {
-			changed = true;
-			partition = newPartition;
-		}
-	}
-	
-	// Mapear estados antigos para novos
-	map<int, int> stateMap;
-	int newStateNum = 0;
-	for (int i = 0; i < n; ++i) {
-		if (stateMap.find(partition[i]) == stateMap.end()) {
-			stateMap[partition[i]] = newStateNum++;
-		}
-	}
-	
-	// Construir novo DFA
-	int newStart = stateMap[partition[dfa.start]];
-	set<int> newFinals;
-	for (int f : dfa.finals) {
-		newFinals.insert(stateMap[partition[f]]);
-	}
-	
-	// Nova matriz de transições
-	vector<vector<int>> newTransitions(newStateNum, vector<int>(alphabet.size(), -1));
-	set<pair<int,int>> addedTransitions;  // evitar duplicatas
-	
-	for (int i = 0; i < n; ++i) {
-		int newI = stateMap[partition[i]];
-		for (size_t j = 0; j < alphabet.size(); ++j) {
-			if (dfa.transitions[i][j] != -1) {
-				int newJ_target = stateMap[partition[dfa.transitions[i][j]]];
-				if (addedTransitions.find({newI, j}) == addedTransitions.end()) {
-					newTransitions[newI][j] = newJ_target;
-					addedTransitions.insert({newI, j});
+			// Operador binário
+			if (dynamic_cast<OperativeNodeBinary*>(node)) {
+				OperativeNodeBinary* b = static_cast<OperativeNodeBinary*>(node);
+				NFA left = buildNFA(b->getLeftOperand(), alphabet, stateCount);
+				NFA right = buildNFA(b->getRightOperand(), alphabet, stateCount);
+				if (node->getValue() == ".") { 
+					return transictionConcatenate (left, right, alphabet, stateCount);
+
+				} else if (node->getValue() == "|") { 
+					return transictionPipe (left, right, alphabet, stateCount);
+
+				} else {
+					throw runtime_error("Operador binário desconhecido: " + node->getValue());
 				}
 			}
+			int startState = stateCount++;
+			int f = stateCount++;
+			// Inicializa a matriz de transições do NFA com conjuntos vazios
+			// O número de estados é f + 1 (de 0 a f) e o número de símbolos é alphabet.size() + 1 (incluindo ε)
+			// Cada célula transitions[i][j] é um conjunto de estados alcançáveis a partir do estado i com o símbolo j
+			vector<vector<set<int>>> transitions(f + 1, vector<set<int>>(alphabet.size() + 1));
+			int idx = -1;
+			for (size_t i = 0; i < alphabet.size(); ++i) {
+				if (node->getValue() == alphabet[i]) idx = static_cast<int>(i);
+			}
+			if (idx == -1 && node->getValue() != "ε" && node->getValue() != "epsilon")
+				throw runtime_error("Símbolo desconhecido: " + node->getValue());
+			if (idx != -1)
+				transitions[startState][idx].insert(f);
+			else 
+				transitions[startState][alphabet.size()].insert(f);
+			NFA nfa = {startState, f, transitions};
+			return nfa;
 		}
-	}
-	
-	return {newStart, newFinals, newTransitions};
-}
+};
 
 // mapear símbolos para índices de coluna na matriz
 vector<string> getAlphabet(Node* node, set<string>& symbols) {
@@ -207,244 +408,6 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 	}
 	return vector<string>(symbols.begin(), symbols.end());
 }
-
-// Forward declaration
-NFA transictionPipe(NFA left, NFA right, vector<string>& alphabet, int& stateCount);
-
-// Converter DFA para NFA (trivial - DFA é um NFA com transições determinísticas)
-// Nota: expande para o alfabeto fornecido (que pode ser maior que o original do DFA)
-NFA DFAtoNFA(const DFA& dfa, const vector<string>& alphabet) {
-	int n = dfa.transitions.size();
-	vector<vector<set<int>>> nfaTransitions(n, vector<set<int>>(alphabet.size() + 1));
-	
-	// Copiar transições do DFA para NFA
-	// O DFA original pode ter um alfabeto menor, então precisamos apenas copiar o que existe
-	for (int i = 0; i < n; ++i) {
-		for (size_t j = 0; j < dfa.transitions[i].size(); ++j) {
-			if (j < alphabet.size() && dfa.transitions[i][j] != -1) {
-				nfaTransitions[i][j].insert(dfa.transitions[i][j]);
-			}
-		}
-	}
-	
-	// NFA tem um único estado final (pegar o primeiro final - em caso de múltiplos, pegar qualquer um)
-	int endState = *dfa.finals.begin();
-	
-	return {dfa.start, endState, nfaTransitions};
-}
-
-// União direta de múltiplos DFAs (mais eficiente)
-DFA unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int& stateCount) {
-	if (dfas.empty()) throw runtime_error("Nenhum DFA fornecido para união");
-	if (dfas.size() == 1) return dfas[0];
-	
-	// Converter para NFAs primeiro
-	// IMPORTANTE: cada NFA pode ter tamanho diferente dependendo de seus símbolos
-	vector<NFA> nfas;
-	for (const auto& dfa : dfas) {
-		// Para cada DFA, usar o alfabeto global (que inclui TODOS os símbolos)
-		NFA nfa = DFAtoNFA(dfa, alphabet);
-		nfas.push_back(nfa);
-	}
-	
-	// Combinar NFAs usando PIPE
-	NFA resultNFA = nfas[0];
-	vector<string> mutableAlphabet = alphabet;
-	for (size_t i = 1; i < nfas.size(); ++i) {
-		resultNFA = transictionPipe(resultNFA, nfas[i], mutableAlphabet, stateCount);
-	}
-	
-	// Converter resultado para DFA
-	return NFAtoDFA(resultNFA, alphabet);
-}
-
-NFA transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
-	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
-	vector<vector<set<int>>> transitions = nfaChild.transitions;
-	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
-	int eps = alphabet.size();
-	// Liga novo início
-	transitions[startState][eps].insert(nfaChild.start);
-	// Liga novo início para novo fim (caso zero ocorrências)
-	transitions[startState][eps].insert(f);
-	// Liga fim do filho para início (loop)
-	transitions[nfaChild.end][eps].insert(nfaChild.start);
-	// Liga fim do filho para novo fim
-	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
-	NFA nfa = {startState, f, transitions};
-	return nfa;
-}
-
-NFA transictionPlus(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
-	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
-	vector<vector<set<int>>> transitions = nfaChild.transitions;
-	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
-	int eps = alphabet.size();
-	// Liga novo início para início do filho
-	transitions[startState][eps].insert(nfaChild.start);
-	// Liga fim do filho para início (loop)
-	transitions[nfaChild.end][eps].insert(nfaChild.start);
-	// Liga fim do filho para novo fim
-	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
-	NFA nfa = {startState, f, transitions};
-	return nfa;
-}
-
-NFA transictionQuestion (NFA nfaChild, vector<string>& alphabet, int& stateCount) {
-	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
-	vector<vector<set<int>>> transitions = nfaChild.transitions;
-	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
-	int eps = alphabet.size();
-	// Liga novo início para início do filho
-	transitions[startState][eps].insert(nfaChild.start);
-	// Liga novo início para novo fim 
-	transitions[startState][eps].insert(f);
-	// Liga fim do filho para novo fim
-	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
-	NFA nfa = {startState, f, transitions};
-	return nfa;
-}
-
-NFA transictionConcatenate (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
-	int offset = left.transitions.size();
-	vector<vector<set<int>>> transitions(left.transitions);
-	for (auto& row : right.transitions) {
-		vector<set<int>> newRow(row);
-		for (auto& startState : newRow) {
-			set<int> newSet;
-			for (int st : startState) newSet.insert(st + offset);
-			startState = newSet;
-		}
-		transitions.push_back(newRow);
-	}
-	int eps = alphabet.size();
-	// Liga fim do left para início do right
-	transitions[left.end][eps].insert(right.start + offset);
-	stateCount = transitions.size();  // atualiza o contador global
-	NFA nfa = {left.start, right.end + offset, transitions};
-	return nfa;
-}
-
-NFA transictionPipe (NFA left, NFA right, vector<string>& alphabet, int& stateCount){
-	int startState = stateCount++;
-	int f = stateCount++;
-	int offsetL = 1;
-	int offsetR = left.transitions.size() + 1;
-	int nL = left.transitions.size();
-	int nR = right.transitions.size();
-	int total = nL + nR + 2;
-	vector<vector<set<int>>> transitions(total, vector<set<int>>(alphabet.size() + 1));
-	int eps = alphabet.size();
-	for (int i = 0; i < nL; ++i)
-		for (size_t j = 0; j < alphabet.size() + 1; ++j)
-			for (int st : left.transitions[i][j])
-				transitions[i + offsetL][j].insert(st + offsetL);
-	for (int i = 0; i < nR; ++i)
-		for (size_t j = 0; j < alphabet.size() + 1; ++j)
-			for (int st : right.transitions[i][j])
-				transitions[i + offsetR][j].insert(st + offsetR);
-	// Liga novo início
-	transitions[startState][eps].insert(left.start + offsetL);
-	// Liga novo início para início do right
-	transitions[startState][eps].insert(right.start + offsetR);
-	// Liga finais
-	transitions[left.end + offsetL][eps].insert(f);
-	// Liga fim do right para novo fim
-	transitions[right.end + offsetR][eps].insert(f);
-	stateCount = transitions.size();  // atualiza o contador global
-	NFA nfa = {startState, f, transitions};
-	return nfa;
-}
-
-// construir o AFN a partir da syntax tree
-NFA buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
-	if (!node) throw runtime_error("Nó nulo na árvore sintática");
-	// Operador unário
-	if (dynamic_cast<OperativeNodeUnary*>(node)) {
-		OperativeNodeUnary* u = static_cast<OperativeNodeUnary*>(node);
-		NFA nfaChild = buildNFA(u->getOperand(), alphabet, stateCount);
-		if (node->getValue() == "*") { 
-			return transictionKleeneStar(nfaChild, alphabet, stateCount);
-			
-		} else if (node->getValue() == "+") { 
-			return transictionPlus(nfaChild, alphabet, stateCount);
-			
-		} else if (node->getValue() == "?") { 
-			return transictionQuestion (nfaChild, alphabet, stateCount);
-			
-		} else {
-			throw runtime_error("Operador unário desconhecido: " + node->getValue());
-		}
-	}
-	// Operador binário
-	if (dynamic_cast<OperativeNodeBinary*>(node)) {
-		OperativeNodeBinary* b = static_cast<OperativeNodeBinary*>(node);
-		NFA left = buildNFA(b->getLeftOperand(), alphabet, stateCount);
-		NFA right = buildNFA(b->getRightOperand(), alphabet, stateCount);
-		if (node->getValue() == ".") { 
-			return transictionConcatenate (left, right, alphabet, stateCount);
-
-		} else if (node->getValue() == "|") { 
-			return transictionPipe (left, right, alphabet, stateCount);
-
-		} else {
-			throw runtime_error("Operador binário desconhecido: " + node->getValue());
-		}
-	}
-	int startState = stateCount++;
-	int f = stateCount++;
-	// Inicializa a matriz de transições do NFA com conjuntos vazios
-	// O número de estados é f + 1 (de 0 a f) e o número de símbolos é alphabet.size() + 1 (incluindo ε)
-	// Cada célula transitions[i][j] é um conjunto de estados alcançáveis a partir do estado i com o símbolo j
-	vector<vector<set<int>>> transitions(f + 1, vector<set<int>>(alphabet.size() + 1));
-	int idx = -1;
-	for (size_t i = 0; i < alphabet.size(); ++i) {
-		if (node->getValue() == alphabet[i]) idx = static_cast<int>(i);
-	}
-	if (idx == -1 && node->getValue() != "ε" && node->getValue() != "epsilon")
-		throw runtime_error("Símbolo desconhecido: " + node->getValue());
-	if (idx != -1)
-		transitions[startState][idx].insert(f);
-	else 
-		transitions[startState][alphabet.size()].insert(f);
-	NFA nfa = {startState, f, transitions};
-	return nfa;
-}
-
-// imprimir a matriz do AFN que foi gerada
-void printNFA(const NFA& nfa, const vector<string>& alphabet) {
-	cout << "Matriz de transições do Autômato Finito Não Determinístico:" << endl;
-	cout << left << setw(10) << "Estado";
-	for (const auto& sym : alphabet) cout << left << setw(12) << sym;
-	cout << left << setw(12) << "ε" << endl;
-	for (size_t i = 0; i < nfa.transitions.size(); ++i) {
-		cout << left << setw(10) << i;
-		for (size_t j = 0; j < alphabet.size() + 1; ++j) {
-			string cell = "";
-			bool first = true;
-			for (int st : nfa.transitions[i][j]) {
-				if (!first) cell += ",";
-				cell += to_string(st);
-				first = false;
-			}
-			if (cell == "") cell = "-";
-			cout << left << setw(12) << cell;
-		}
-		cout << endl;
-	}
-	cout << "Estado inicial: " << nfa.start << "\nEstado final: " << nfa.end << endl;
-	cout << endl;
-}
-
 
 int main() {
 	regularExpressionToken ret;
@@ -468,22 +431,22 @@ int main() {
 		int stateCount = 0;
 		try {
 			printTree(tree);
-			NFA nfa = buildNFA(tree, alphabet, stateCount);
-			printNFA(nfa, alphabet);
-			DFA dfa = NFAtoDFA(nfa, alphabet);
+			NFA nfa = NFA::buildNFA(tree, alphabet, stateCount);
+			nfa.printNFA(alphabet);
+			DFA dfa = nfa.toDFA(alphabet);
 			cout << ">>> DFA ORIGINAL:" << endl;
-			printDFA(dfa, alphabet);
-			DFA dfaMin = minimizeDFA(dfa, alphabet);
+			dfa.printDFA(alphabet);
+			dfa.minimize(alphabet);
 			cout << ">>> DFA MINIMIZADO:" << endl;
-			printDFA(dfaMin, alphabet);
-			minimizedDFAs.push_back(dfaMin);
+			dfa.printDFA(alphabet);
+			minimizedDFAs.push_back(dfa);
 		} catch (const exception& e) {
 			cout << "Erro ao construir AFN/DFA: " << e.what() << endl;
 		}
 		delete tree;
 	}
 	
-	// União de todos os DFAs minimizados
+	/* // União de todos os DFAs minimizados
 	if (minimizedDFAs.size() > 1) {
 		cout << string(80, '=') << endl;
 		cout << "AUTÔMATO FINAL - UNIÃO DE TODOS OS TOKENS:" << endl;
@@ -493,11 +456,11 @@ int main() {
 			int stateCount = 0;
 			DFA dfaUnion = unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
 			cout << ">>> DFA DA UNIÃO (sem minimizar - preserva contexto dos tokens):" << endl;
-			printDFA(dfaUnion, globalAlphabet);
+			dfaUnion.printDFA(globalAlphabet);
 		} catch (const exception& e) {
 			cout << "Erro ao unir DFAs: " << e.what() << endl;
 		}
-	}
+	}*/
 	
 	cout << string(80, '=') << endl;
 	return 0;
