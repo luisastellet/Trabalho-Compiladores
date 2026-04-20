@@ -3,9 +3,9 @@
 #include <map>
 #include <set>
 #include <string>
-#include "syntaxTree.hpp"
-#include "dfa.hpp"
-#include "nfa.hpp"
+#include "../syntax/syntaxTree.hpp"
+#include "../automata/dfa.hpp"
+#include "../automata/nfa.hpp"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 
 int main() {
 	regularExpressionToken ret;
-	vector<string> lines = readRegexFromFile("input.txt");
+	vector<string> lines = readRegexFromFile("./main/input.txt");
 	if (lines.empty()) {
 		cout << "Erro ao ler input.txt" << endl;
 		return 1;

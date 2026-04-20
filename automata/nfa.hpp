@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "syntaxTree.hpp"
+#include "../syntax/syntaxTree.hpp"
 
 using namespace std;
 

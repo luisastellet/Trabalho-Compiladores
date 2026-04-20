@@ -30,6 +30,6 @@ Usamos notação pós-fixada para facilitar a construção de árvores sintátic
 - Diferenciar as classes NFA e DFA em arquivos diferentes (usar herança)
 
 ## Como executar o código
-Compilar: ```g++ syntaxTree.cpp -o arquivo_saida``` 
+Compilar: ```make``` 
 
-Executar: ```./arquivo_saida```
+Executar: ```.\main\automaton.exe```
