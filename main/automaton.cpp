@@ -63,7 +63,7 @@ int main() {
 		delete tree;
 	}
 	
-	/* // União de todos os DFAs minimizados
+	// União de todos os DFAs minimizados
 	if (minimizedDFAs.size() > 1) {
 		cout << string(80, '=') << endl;
 		cout << "AUTÔMATO FINAL - UNIÃO DE TODOS OS TOKENS:" << endl;
@@ -71,13 +71,13 @@ int main() {
 		try {
 			vector<string> globalAlphabet(globalSymbols.begin(), globalSymbols.end());
 			int stateCount = 0;
-			DFA dfaUnion = unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
+			DFA dfaUnion = DFA::unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
 			cout << ">>> DFA DA UNIÃO (sem minimizar - preserva contexto dos tokens):" << endl;
 			dfaUnion.printDFA(globalAlphabet);
 		} catch (const exception& e) {
 			cout << "Erro ao unir DFAs: " << e.what() << endl;
 		}
-	}*/
+	}
 	
 	cout << string(80, '=') << endl;
 	return 0;

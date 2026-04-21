@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <iomanip>
+#include <queue>
 
 using namespace std;
 
@@ -128,6 +129,116 @@ NFA DFA::toNFA(const vector<string>& alphabet) const {
 }
 
 DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int& stateCount) {
-	//TODO
-	return {};
+	if (dfas.empty()) {
+		DFA emptyDFA;
+		emptyDFA.start = 0;
+		emptyDFA.transitions = vector<vector<int>>(1, vector<int>(alphabet.size(), -1));
+		return emptyDFA;
+	}
+
+	// Mapeamento: estado composto (vetor de estados) -> ID numérico
+	map<vector<int>, int> stateMap;
+	vector<vector<int>> reversedStateMap;  // ID numérico -> vetor de estados
+	queue<vector<int>> toProcess;
+
+	// Estado inicial: concatenação de todos os estados iniciais
+	vector<int> initialState;
+	for (const auto& dfa : dfas) {
+		initialState.push_back(dfa.start);
+	}
+
+	// BFS para explorar todos os estados alcançáveis
+	stateMap[initialState] = 0;
+	reversedStateMap.push_back(initialState);
+	toProcess.push(initialState);
+
+	while (!toProcess.empty()) {
+		vector<int> currentState = toProcess.front();
+		toProcess.pop();
+
+		// Para cada símbolo no alfabeto, calcular o próximo estado
+		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
+			vector<int> nextState;
+			bool validTransition = false;
+
+			// Aplicar transição para cada DFA individualmente
+			for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
+				int stateInDfa = currentState[dfaIdx];
+				int nextStateInDfa = -1;
+
+				// Verificar se existe transição válida
+				if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
+					symIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
+					nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][symIdx];
+					if (nextStateInDfa != -1) {
+						validTransition = true;
+					}
+				}
+
+				nextState.push_back(nextStateInDfa);
+			}
+
+			// Se houver pelo menos uma transição válida, adicionar o novo estado
+			if (validTransition && stateMap.find(nextState) == stateMap.end()) {
+				stateMap[nextState] = reversedStateMap.size();
+				reversedStateMap.push_back(nextState);
+				toProcess.push(nextState);
+			}
+		}
+	}
+
+	// Construir o DFA unido
+	int numUnionStates = reversedStateMap.size();
+	DFA unionDfa;
+	unionDfa.start = stateMap[initialState];
+	unionDfa.transitions = vector<vector<int>>(numUnionStates, vector<int>(alphabet.size(), -1));
+
+	// Preencher as transições do DFA unido
+	for (int id = 0; id < numUnionStates; ++id) {
+		const auto& currentState = reversedStateMap[id];
+
+		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
+			vector<int> nextState;
+			bool validTransition = false;
+
+			// Aplicar transição para cada DFA individualmente
+			for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
+				int stateInDfa = currentState[dfaIdx];
+				int nextStateInDfa = -1;
+
+				// Verificar se existe transição válida
+				if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
+					symIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
+					nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][symIdx];
+					if (nextStateInDfa != -1) {
+						validTransition = true;
+					}
+				}
+
+				nextState.push_back(nextStateInDfa);
+			}
+
+			// Se houver transição válida, adicionar a transição no DFA unido
+			if (validTransition && stateMap.find(nextState) != stateMap.end()) {
+				unionDfa.transitions[id][symIdx] = stateMap[nextState];
+			}
+		}
+	}
+
+	// Determinar os estados finais: estados onde PELO MENOS UM dos DFAs está em estado final
+	for (int id = 0; id < numUnionStates; ++id) {
+		const auto& compoundState = reversedStateMap[id];
+
+		for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
+			int stateInDfa = compoundState[dfaIdx];
+			// Se o estado está em estado final em qualquer um dos DFAs
+			if (dfas[dfaIdx].finals.count(stateInDfa)) {
+				unionDfa.finals.insert(id);
+				break;  // Já está marcado como final, não precisa verificar outros
+			}
+		}
+	}
+
+	stateCount = numUnionStates;
+	return unionDfa;
 }
