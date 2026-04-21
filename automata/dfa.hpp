@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include <string>
 
 using namespace std;
@@ -14,6 +15,7 @@ public:
 	int start;
 	set<int> finals;
 	vector<vector<int>> transitions;
+	map<int, int> stateToToken;  // Mapeia estado final -> ID do token (para scanner)
 
 	void minimize(const vector<string>& alphabet);
 	void printDFA(const vector<string>& alphabet) const;

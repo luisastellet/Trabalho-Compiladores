@@ -183,7 +183,10 @@ DFA NFA::toDFA(const vector<string>& alphabet) const {
 		if (dfaStates[i].count(this->end)) finals.insert(i);
 	}
 
-	DFA dfa = {0, finals, dfaTransictions};
+	DFA dfa;
+	dfa.start = 0;
+	dfa.finals = finals;
+	dfa.transitions = dfaTransictions;
 	return dfa;
 }
 

@@ -104,7 +104,13 @@ void DFA::printDFA(const vector<string>& alphabet) const {
 		cout << endl;
 	}
 	cout << "Estado inicial: " << this->start << "\nEstados finais: ";
-	for (int f : this->finals) cout << f << " ";
+	for (int f : this->finals) {
+		cout << f;
+		if (!this->stateToToken.empty() && this->stateToToken.count(f)) {
+			cout << " (Token " << this->stateToToken.at(f) << ")";
+		}
+		cout << " ";
+	}
 	cout << endl << endl;
 }
 
@@ -234,6 +240,8 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 			// Se o estado está em estado final em qualquer um dos DFAs
 			if (dfas[dfaIdx].finals.count(stateInDfa)) {
 				unionDfa.finals.insert(id);
+				// Mapear o estado final para o token (ID = índice do DFA na lista)
+				unionDfa.stateToToken[id] = dfaIdx;
 				break;  // Já está marcado como final, não precisa verificar outros
 			}
 		}
