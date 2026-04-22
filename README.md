@@ -30,4 +30,4 @@ Usamos notação pós-fixada para facilitar a construção de árvores sintátic
 - Diferenciar as classes NFA e DFA em arquivos diferentes (usar herança)
 
 ## Como executar o código
-Compilar e Executar : ```bahs build_and_ruin.sh``` 
+Compilar e Executar : ```bash build_and_ruin.sh``` 
