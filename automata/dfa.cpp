@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <queue>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -302,7 +303,15 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\tchar value[256]; // Valor do token\n";
 	ss << "};\n\n";
 
-	// Função scanner principal com switch case aninhado
+	// Função helper para match de símbolos (incluindo multi-char)
+	ss << "// Função helper para comparar símbolo no input\n";
+	ss << "int matchSymbol(const char* input, int pos, const char* symbol) {\n";
+	ss << "\tsize_t len = strlen(symbol);\n";
+	ss << "\tif (strncmp(&input[pos], symbol, len) == 0) return len;\n";
+	ss << "\treturn 0;\n";
+	ss << "}\n\n";
+
+	// Função scanner principal
 	ss << "struct Token scanToken(const char* input, int* pos) {\n";
 	ss << "\tstruct Token token;\n";
 	ss << "\ttoken.type = -1;\n";
@@ -314,45 +323,53 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\tint tokenStart = *pos;\n\n";
 
 	ss << "\twhile (input[*pos] != '\\0') {\n";
-	ss << "\t\tchar c = input[*pos];\n";
-	ss << "\t\tint nextState = -1;\n\n";
+	ss << "\t\tint nextState = -1;\n";
+	ss << "\t\tint symbolLen = 0;\n\n";
 
 	ss << "\t\tswitch (currentState) {\n";
 
 	// Para cada estado, criar um case
 	for (int state = 0; state < numStates; ++state) {
-		ss << "\t\t\tcase " << state << ":\n";
-		ss << "\t\t\t\tswitch (c) {\n";
+		ss << "\t\t\tcase " << state << ": {\n";
 
-		// Para cada símbolo, criar uma transição
-		bool hasTransitions = false;
+		// Criar array de possíveis transições
+		vector<pair<int, string>> transitions;
 		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
 			if (this->transitions[state][symIdx] != -1) {
-				const string& sym = alphabet[symIdx];
-				if (sym.length() == 1) {
-					char c = sym[0];
-					ss << "\t\t\t\t\tcase '" << c << "':\n";
-					ss << "\t\t\t\t\t\tnextState = " << this->transitions[state][symIdx] << ";\n";
-					ss << "\t\t\t\t\t\tbreak;\n";
-					hasTransitions = true;
-				} else if (sym == "\\b") {
-					ss << "\t\t\t\t\tcase '\\b':\n";
-					ss << "\t\t\t\t\t\tnextState = " << this->transitions[state][symIdx] << ";\n";
-					ss << "\t\t\t\t\t\tbreak;\n";
-					hasTransitions = true;
-				}
-				// Nota: strings multi-caractere como 'input' não podem ser tratadas
-				// com switch simples, seria necessário usar strcmp
+				transitions.push_back({this->transitions[state][symIdx], alphabet[symIdx]});
 			}
 		}
 
-		if (!hasTransitions) {
-			ss << "\t\t\t\t\tdefault:\n";
-			ss << "\t\t\t\t\t\tnextState = -1;\n";
+		// Ordenar por comprimento (mais longos primeiro para longest match)
+		sort(transitions.begin(), transitions.end(), 
+			[](const pair<int,string>& a, const pair<int,string>& b) {
+				return a.second.length() > b.second.length();
+			});
+
+		// Gerar if-else chain para cada símbolo
+		for (size_t i = 0; i < transitions.size(); ++i) {
+			const string& sym = transitions[i].second;
+			int nextSt = transitions[i].first;
+
+			if (i == 0) ss << "\t\t\t\t";
+			else ss << " else ";
+
+			if (sym.length() == 1 && sym[0] != '\\') {
+				// Caractere simples
+				ss << "if (input[*pos] == '" << sym[0] << "') {\n";
+				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
+				ss << "\t\t\t\t\tsymbolLen = 1;\n";
+				ss << "\t\t\t\t}\n";
+			} else {
+				// String multi-caractere ou símbolo especial
+				ss << "if ((symbolLen = matchSymbol(input, *pos, \"" << sym << "\"))) {\n";
+				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
+				ss << "\t\t\t\t}\n";
+			}
 		}
 
-		ss << "\t\t\t\t}\n";
-		ss << "\t\t\t\tbreak;\n\n";
+		ss << "\t\t\t\tbreak;\n";
+		ss << "\t\t\t}\n\n";
 	}
 
 	ss << "\t\t\tdefault:\n";
@@ -363,8 +380,11 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\t\tif (nextState == -1) break;\n\n";
 
 	ss << "\t\tcurrentState = nextState;\n";
-	ss << "\t\ttoken.value[*pos - tokenStart] = c;\n";
-	ss << "\t\t(*pos)++;\n\n";
+	ss << "\t\t// Adicionar símbolo ao valor do token\n";
+	ss << "\t\tfor (int i = 0; i < symbolLen; i++) {\n";
+	ss << "\t\t\ttoken.value[*pos - tokenStart + i] = input[*pos + i];\n";
+	ss << "\t\t}\n";
+	ss << "\t\t*pos += symbolLen;\n\n";
 
 	ss << "\t\t// Verificar se é estado final (longest match)\n";
 	ss << "\t\tswitch (currentState) {\n";
@@ -436,13 +456,44 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\t\t\tline[strlen(line)-1] = '\\0';\n";
 	ss << "\t\t}\n\n";
 
+	ss << "\t\t// Processar sequências de escape\n";
+	ss << "\t\tchar processedInput[512];\n";
+	ss << "\t\tint processedLen = 0;\n";
+	ss << "\t\tfor (int j = 0; input[j] && processedLen < 511; j++) {\n";
+	ss << "\t\t\tif (input[j] == '\\\\' && input[j+1]) {\n";
+	ss << "\t\t\t\tif (input[j+1] == 'b') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\b';\n";
+	ss << "\t\t\t\t\tj++;\n";
+	ss << "\t\t\t\t} else if (input[j+1] == 'n') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\n';\n";
+	ss << "\t\t\t\t\tj++;\n";
+	ss << "\t\t\t\t} else if (input[j+1] == 't') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\t';\n";
+	ss << "\t\t\t\t\tj++;\n";
+	ss << "\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
+	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t} else {\n";
+	ss << "\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
+	ss << "\t\t\t}\n";
+	ss << "\t\t}\n";
+	ss << "\t\tprocessedInput[processedLen] = '\\0';\n\n";
+
 	ss << "\t\tprintf(\"Entrada: %s → \", inputDisplay);\n\n";
 
 	ss << "\t\tint pos = 0;\n";
-	ss << "\t\tstruct Token token = scanToken(input, &pos);\n\n";
+	ss << "\t\tstruct Token token = scanToken(processedInput, &pos);\n\n";
 
 	ss << "\t\tif (token.type >= 0) {\n";
-	ss << "\t\t\tprintf(\"Token %d ('%s')\\n\", token.type, token.value);\n";
+	ss << "\t\t\tprintf(\"Token %d ('\", token.type);\n";
+	ss << "\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
+	ss << "\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
+	ss << "\t\t\t\t\tprintf(\"%c\", token.value[i]);\n";
+	ss << "\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[i]);\n";
+	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t}\n";
+	ss << "\t\t\tprintf(\"')\\n\");\n";
 	ss << "\t\t} else {\n";
 	ss << "\t\t\tprintf(\"Não reconhecido\\n\");\n";
 	ss << "\t\t}\n";

@@ -5,3 +5,9 @@
 "ab"
 ""
 "a"
+"abinput"
+"abcabc"
+"a\bc"
+"input"
+a\tc
+a\t\t\t
