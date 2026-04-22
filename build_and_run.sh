@@ -10,18 +10,17 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="$SCRIPT_DIR"
-MAIN_DIR="$SCRIPT_DIR/main"
 
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}      Gerador de Scanner Léxico - Build e Execução${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}\n"
 
-echo -e "${YELLOW}[1/4] Limpando...${NC}"
+echo -e "${YELLOW}[1/3] Limpando...${NC}"
 cd "$BUILD_DIR"
 rm -f main/automaton scanner scanner.c
 echo -e "${GREEN}OK${NC}\n"
 
-echo -e "${YELLOW}[2/4] Compilando gerador...${NC}"
+echo -e "${YELLOW}[2/3] Compilando gerador (C++)...${NC}"
 g++ -std=c++11 -Wall -Wextra -g \
     -o main/automaton \
     main/automaton.cpp \
@@ -35,12 +34,9 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}OK${NC}\n"
 
-echo -e "${YELLOW}[3/4] Gerando scanner...${NC}"
+echo -e "${YELLOW}[3/3] Gerando scanner e compilando (C)...${NC}"
 
-if [ ! -f "$BUILD_DIR/input.txt" ]; then
-    cp "$MAIN_DIR/input.txt" "$BUILD_DIR/input.txt"
-fi
-
+# Executar gerador
 cd "$BUILD_DIR"
 ./main/automaton
 
@@ -48,13 +44,12 @@ if [ ! -f "$BUILD_DIR/scanner.c" ]; then
     echo -e "${RED}Erro: scanner.c não gerado${NC}"
     exit 1
 fi
-echo -e "${GREEN}OK${NC}\n"
 
-echo -e "${YELLOW}[4/4] Compilando scanner...${NC}"
-gcc -Wall -o scanner scanner.c scanner_main.c
+# Compilar scanner (agora com main integrado)
+gcc -Wall -o scanner scanner.c
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}Erro na compilação${NC}"
+    echo -e "${RED}Erro na compilação do scanner${NC}"
     exit 1
 fi
 echo -e "${GREEN}OK${NC}\n"

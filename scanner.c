@@ -195,22 +195,59 @@ struct Token scanToken(const char* input, int* pos) {
 	return token;
 }
 
-// Função de teste (descomente para usar)
-/*
 int main() {
-	const char* input = "seu_input_aqui";
-	int pos = 0;
-	struct Token token;
+	FILE* file = fopen("tests/test_input.txt", "r");
+	if (!file) {
+		perror("Erro ao abrir tests/test_input.txt");
+		return 1;
+	}
 
-	while (pos < strlen(input)) {
-		token = scanToken(input, &pos);
+	printf("Scanner Léxico Gerado\n");
+	printf("═════════════════════════════════════\n\n");
+
+	printf("Expressões Regulares:\n");
+	printf("  Token 0: a b . c . *       (ab, abc, abcc, ...)\n");
+	printf("  Token 1: a \\b c . .       (a, \\b, c)\n");
+	printf("  Token 2: a b . input * .   (ab, input, input*)\n");
+	printf("  Token 3: a b . c ? d . . + (ab(c|d) repetido)\n\n");
+
+	printf("Testes:\n");
+	printf("─────────────────────────────────────\n");
+
+	char line[512];
+
+	while (fgets(line, sizeof(line), file)) {
+		// Remover quebra de linha
+		size_t len = strlen(line);
+		if (len > 0 && line[len-1] == '\n') {
+			line[len-1] = '\0';
+		}
+		// Ignorar linhas vazias
+		if (strlen(line) == 0) continue;
+
+		// Remover aspas de contorno se existirem
+		char* input = line;
+		char inputDisplay[512];
+		strcpy(inputDisplay, line);
+
+		if (line[0] == '\"' && line[strlen(line)-1] == '\"') {
+			input = &line[1];
+			line[strlen(line)-1] = '\0';
+		}
+
+		printf("Entrada: %s → ", inputDisplay);
+
+		int pos = 0;
+		struct Token token = scanToken(input, &pos);
+
 		if (token.type >= 0) {
-			printf("Token tipo %d: '%s'\\n", token.type, token.value);
+			printf("Token %d ('%s')\n", token.type, token.value);
 		} else {
-			printf("Erro: símbolo desconhecido '%c'\\n", input[pos]);
-			pos++;
+			printf("Não reconhecido\n");
 		}
 	}
+
+	fclose(file);
+	printf("\n\n");
 	return 0;
 }
-*/

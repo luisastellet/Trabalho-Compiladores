@@ -395,26 +395,63 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\treturn token;\n";
 	ss << "}\n\n";
 
-	// Função de teste
-	ss << "// Função de teste (descomente para usar)\n";
-	ss << "/*\n";
+	// Função main integrada que lê de arquivo
 	ss << "int main() {\n";
-	ss << "\tconst char* input = \"seu_input_aqui\";\n";
-	ss << "\tint pos = 0;\n";
-	ss << "\tstruct Token token;\n\n";
+	ss << "\tFILE* file = fopen(\"tests/test_input.txt\", \"r\");\n";
+	ss << "\tif (!file) {\n";
+	ss << "\t\tperror(\"Erro ao abrir tests/test_input.txt\");\n";
+	ss << "\t\treturn 1;\n";
+	ss << "\t}\n\n";
 
-	ss << "\twhile (pos < strlen(input)) {\n";
-	ss << "\t\ttoken = scanToken(input, &pos);\n";
-	ss << "\t\tif (token.type >= 0) {\n";
-	ss << "\t\t\tprintf(\"Token tipo %d: '%s'\\\\n\", token.type, token.value);\n";
-	ss << "\t\t} else {\n";
-	ss << "\t\t\tprintf(\"Erro: símbolo desconhecido '%c'\\\\n\", input[pos]);\n";
-	ss << "\t\t\tpos++;\n";
+	ss << "\tprintf(\"Scanner Léxico Gerado\\n\");\n";
+	ss << "\tprintf(\"═════════════════════════════════════\\n\\n\");\n\n";
+
+	ss << "\tprintf(\"Expressões Regulares:\\n\");\n";
+	ss << "\tprintf(\"  Token 0: a b . c . *       (ab, abc, abcc, ...)\\n\");\n";
+	ss << "\tprintf(\"  Token 1: a \\\\b c . .       (a, \\\\b, c)\\n\");\n";
+	ss << "\tprintf(\"  Token 2: a b . input * .   (ab, input, input*)\\n\");\n";
+	ss << "\tprintf(\"  Token 3: a b . c ? d . . + (ab(c|d) repetido)\\n\\n\");\n\n";
+
+	ss << "\tprintf(\"Testes:\\n\");\n";
+	ss << "\tprintf(\"─────────────────────────────────────\\n\");\n\n";
+
+	ss << "\tchar line[512];\n\n";
+
+	ss << "\twhile (fgets(line, sizeof(line), file)) {\n";
+	ss << "\t\t// Remover quebra de linha\n";
+	ss << "\t\tsize_t len = strlen(line);\n";
+	ss << "\t\tif (len > 0 && line[len-1] == '\\n') {\n";
+	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
-	ss << "\t}\n";
+	ss << "\t\t// Ignorar linhas vazias\n";
+	ss << "\t\tif (strlen(line) == 0) continue;\n\n";
+
+	ss << "\t\t// Remover aspas de contorno se existirem\n";
+	ss << "\t\tchar* input = line;\n";
+	ss << "\t\tchar inputDisplay[512];\n";
+	ss << "\t\tstrcpy(inputDisplay, line);\n\n";
+
+	ss << "\t\tif (line[0] == '\\\"' && line[strlen(line)-1] == '\\\"') {\n";
+	ss << "\t\t\tinput = &line[1];\n";
+	ss << "\t\t\tline[strlen(line)-1] = '\\0';\n";
+	ss << "\t\t}\n\n";
+
+	ss << "\t\tprintf(\"Entrada: %s → \", inputDisplay);\n\n";
+
+	ss << "\t\tint pos = 0;\n";
+	ss << "\t\tstruct Token token = scanToken(input, &pos);\n\n";
+
+	ss << "\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\tprintf(\"Token %d ('%s')\\n\", token.type, token.value);\n";
+	ss << "\t\t} else {\n";
+	ss << "\t\t\tprintf(\"Não reconhecido\\n\");\n";
+	ss << "\t\t}\n";
+	ss << "\t}\n\n";
+
+	ss << "\tfclose(file);\n";
+	ss << "\tprintf(\"\\n\\n\");\n";
 	ss << "\treturn 0;\n";
 	ss << "}\n";
-	ss << "*/\n";
 
 	return ss.str();
 }
