@@ -187,6 +187,7 @@ DFA NFA::toDFA(const vector<string>& alphabet) const {
 	dfa.start = 0;
 	dfa.finals = finals;
 	dfa.transitions = dfaTransictions;
+	dfa.alphabet = alphabet;  // ADIÇÃO: armazenar o alfabeto local
 	return dfa;
 }
 

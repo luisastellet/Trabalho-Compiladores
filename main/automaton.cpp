@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <fstream>
 #include "../syntax/syntaxTree.hpp"
 #include "../automata/dfa.hpp"
 #include "../automata/nfa.hpp"
@@ -28,7 +29,7 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 
 int main() {
 	regularExpressionToken ret;
-	vector<string> lines = readRegexFromFile("./main/input.txt");
+	vector<string> lines = readRegexFromFile("./input.txt");
 	if (lines.empty()) {
 		cout << "Erro ao ler input.txt" << endl;
 		return 1;
@@ -66,6 +67,13 @@ int main() {
 	// União de todos os DFAs minimizados
 	if (minimizedDFAs.size() > 1) {
 		cout << string(80, '=') << endl;
+		cout << "DEBUG - Estados iniciais dos DFAs minimizados:" << endl;
+		for (size_t i = 0; i < minimizedDFAs.size(); ++i) {
+			cout << "DFA " << i << ": start=" << minimizedDFAs[i].start << ", finals={";
+			for (int f : minimizedDFAs[i].finals) cout << f << " ";
+			cout << "}" << endl;
+		}
+		cout << string(80, '=') << endl;
 		cout << "AUTÔMATO FINAL - UNIÃO DE TODOS OS TOKENS:" << endl;
 		cout << string(80, '=') << endl;
 		try {
@@ -73,7 +81,23 @@ int main() {
 			int stateCount = 0;
 			DFA dfaUnion = DFA::unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
 			cout << ">>> DFA DA UNIÃO (sem minimizar - preserva contexto dos tokens):" << endl;
-			dfaUnion.printDFA(globalAlphabet);
+			dfaUnion.printDFA(globalAlphabet);  // Desabilitar matrix print - muito verboso
+			
+			// Gerar o scanner em C
+			cout << string(80, '=') << endl;
+			cout << "GERANDO SCANNER EM C..." << endl;
+			cout << string(80, '=') << endl;
+			string scannerCode = dfaUnion.generateCScanner(globalAlphabet);
+			
+			// Salvar em arquivo
+			ofstream scannerFile("./scanner.c");
+			if (scannerFile.is_open()) {
+				scannerFile << scannerCode;
+				scannerFile.close();
+				cout << "Scanner gerado com sucesso: ./scanner.c" << endl;
+			} else {
+				cout << "Erro ao abrir arquivo scanner.c para escrita" << endl;
+			}
 		} catch (const exception& e) {
 			cout << "Erro ao unir DFAs: " << e.what() << endl;
 		}

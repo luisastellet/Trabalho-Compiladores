@@ -40,7 +40,6 @@ class OperativeNodeBinary : public Node {
 
 class regularExpressionToken {
     string tokenType;
-    Node *tokenExpression;
 
     public:
         Node* createSyntaxTree(string regularExpression);

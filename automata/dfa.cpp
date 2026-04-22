@@ -5,6 +5,7 @@
 #include <set>
 #include <iomanip>
 #include <queue>
+#include <sstream>
 
 using namespace std;
 
@@ -139,7 +140,27 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 		DFA emptyDFA;
 		emptyDFA.start = 0;
 		emptyDFA.transitions = vector<vector<int>>(1, vector<int>(alphabet.size(), -1));
+		emptyDFA.alphabet = alphabet;
 		return emptyDFA;
+	}
+
+	// Construir mapas de símbolos: globalIdx -> localIdx para cada DFA
+	// Isso permite mapear de um símbolo global para o índice local em cada DFA
+	vector<map<size_t, size_t>> symMapPerDfa(dfas.size());
+	
+	for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
+		const auto& localAlphabet = dfas[dfaIdx].alphabet;
+		
+		// Para cada símbolo no alfabeto global
+		for (size_t globalIdx = 0; globalIdx < alphabet.size(); ++globalIdx) {
+			// Procurar este símbolo no alfabeto local do DFA
+			for (size_t localIdx = 0; localIdx < localAlphabet.size(); ++localIdx) {
+				if (alphabet[globalIdx] == localAlphabet[localIdx]) {
+					symMapPerDfa[dfaIdx][globalIdx] = localIdx;
+					break;
+				}
+			}
+		}
 	}
 
 	// Mapeamento: estado composto (vetor de estados) -> ID numérico
@@ -158,12 +179,13 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 	reversedStateMap.push_back(initialState);
 	toProcess.push(initialState);
 
-	while (!toProcess.empty()) {
+	int maxStates = 10000;  // limite de segurança
+	while (!toProcess.empty() && (int)reversedStateMap.size() < maxStates) {
 		vector<int> currentState = toProcess.front();
 		toProcess.pop();
 
-		// Para cada símbolo no alfabeto, calcular o próximo estado
-		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
+		// Para cada símbolo no alfabeto GLOBAL, calcular o próximo estado
+		for (size_t globalSymIdx = 0; globalSymIdx < alphabet.size(); ++globalSymIdx) {
 			vector<int> nextState;
 			bool validTransition = false;
 
@@ -172,12 +194,17 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 				int stateInDfa = currentState[dfaIdx];
 				int nextStateInDfa = -1;
 
-				// Verificar se existe transição válida
-				if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
-					symIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
-					nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][symIdx];
-					if (nextStateInDfa != -1) {
-						validTransition = true;
+				// Se o símbolo existe no alfabeto local do DFA
+				if (symMapPerDfa[dfaIdx].find(globalSymIdx) != symMapPerDfa[dfaIdx].end()) {
+					size_t localSymIdx = symMapPerDfa[dfaIdx][globalSymIdx];
+					
+					// Verificar se existe transição válida
+					if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
+						localSymIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
+						nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][localSymIdx];
+						if (nextStateInDfa != -1) {
+							validTransition = true;
+						}
 					}
 				}
 
@@ -197,13 +224,14 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 	int numUnionStates = reversedStateMap.size();
 	DFA unionDfa;
 	unionDfa.start = stateMap[initialState];
+	unionDfa.alphabet = alphabet;
 	unionDfa.transitions = vector<vector<int>>(numUnionStates, vector<int>(alphabet.size(), -1));
 
 	// Preencher as transições do DFA unido
 	for (int id = 0; id < numUnionStates; ++id) {
 		const auto& currentState = reversedStateMap[id];
 
-		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
+		for (size_t globalSymIdx = 0; globalSymIdx < alphabet.size(); ++globalSymIdx) {
 			vector<int> nextState;
 			bool validTransition = false;
 
@@ -212,12 +240,17 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 				int stateInDfa = currentState[dfaIdx];
 				int nextStateInDfa = -1;
 
-				// Verificar se existe transição válida
-				if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
-					symIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
-					nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][symIdx];
-					if (nextStateInDfa != -1) {
-						validTransition = true;
+				// Se o símbolo existe no alfabeto local do DFA
+				if (symMapPerDfa[dfaIdx].find(globalSymIdx) != symMapPerDfa[dfaIdx].end()) {
+					size_t localSymIdx = symMapPerDfa[dfaIdx][globalSymIdx];
+					
+					// Verificar se existe transição válida
+					if (stateInDfa >= 0 && stateInDfa < (int)dfas[dfaIdx].transitions.size() &&
+						localSymIdx < dfas[dfaIdx].transitions[stateInDfa].size()) {
+						nextStateInDfa = dfas[dfaIdx].transitions[stateInDfa][localSymIdx];
+						if (nextStateInDfa != -1) {
+							validTransition = true;
+						}
 					}
 				}
 
@@ -226,14 +259,18 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 
 			// Se houver transição válida, adicionar a transição no DFA unido
 			if (validTransition && stateMap.find(nextState) != stateMap.end()) {
-				unionDfa.transitions[id][symIdx] = stateMap[nextState];
+				unionDfa.transitions[id][globalSymIdx] = stateMap[nextState];
 			}
 		}
 	}
 
 	// Determinar os estados finais: estados onde PELO MENOS UM dos DFAs está em estado final
+	// IMPORTANTE: excluir o estado inicial (que é um vetor de estados iniciais)
 	for (int id = 0; id < numUnionStates; ++id) {
 		const auto& compoundState = reversedStateMap[id];
+		
+		// Pular o estado inicial da união
+		if (id == unionDfa.start) continue;
 
 		for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
 			int stateInDfa = compoundState[dfaIdx];
@@ -249,4 +286,135 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 
 	stateCount = numUnionStates;
 	return unionDfa;
+}
+
+string DFA::generateCScanner(const vector<string>& alphabet) const {
+	stringstream ss;
+	int numStates = this->transitions.size();
+
+	// Header
+	ss << "#include <stdio.h>\n";
+	ss << "#include <string.h>\n\n";
+
+	// Estrutura para armazenar o resultado do scanner
+	ss << "struct Token {\n";
+	ss << "\tint type;        // ID do token (-1 = erro)\n";
+	ss << "\tchar value[256]; // Valor do token\n";
+	ss << "};\n\n";
+
+	// Função scanner principal com switch case aninhado
+	ss << "struct Token scanToken(const char* input, int* pos) {\n";
+	ss << "\tstruct Token token;\n";
+	ss << "\ttoken.type = -1;\n";
+	ss << "\tmemset(token.value, 0, sizeof(token.value));\n\n";
+
+	ss << "\tint currentState = " << this->start << ";\n";
+	ss << "\tint lastFinalState = -1;\n";
+	ss << "\tint lastFinalPos = *pos;\n";
+	ss << "\tint tokenStart = *pos;\n\n";
+
+	ss << "\twhile (input[*pos] != '\\0') {\n";
+	ss << "\t\tchar c = input[*pos];\n";
+	ss << "\t\tint nextState = -1;\n\n";
+
+	ss << "\t\tswitch (currentState) {\n";
+
+	// Para cada estado, criar um case
+	for (int state = 0; state < numStates; ++state) {
+		ss << "\t\t\tcase " << state << ":\n";
+		ss << "\t\t\t\tswitch (c) {\n";
+
+		// Para cada símbolo, criar uma transição
+		bool hasTransitions = false;
+		for (size_t symIdx = 0; symIdx < alphabet.size(); ++symIdx) {
+			if (this->transitions[state][symIdx] != -1) {
+				const string& sym = alphabet[symIdx];
+				if (sym.length() == 1) {
+					char c = sym[0];
+					ss << "\t\t\t\t\tcase '" << c << "':\n";
+					ss << "\t\t\t\t\t\tnextState = " << this->transitions[state][symIdx] << ";\n";
+					ss << "\t\t\t\t\t\tbreak;\n";
+					hasTransitions = true;
+				} else if (sym == "\\b") {
+					ss << "\t\t\t\t\tcase '\\b':\n";
+					ss << "\t\t\t\t\t\tnextState = " << this->transitions[state][symIdx] << ";\n";
+					ss << "\t\t\t\t\t\tbreak;\n";
+					hasTransitions = true;
+				}
+				// Nota: strings multi-caractere como 'input' não podem ser tratadas
+				// com switch simples, seria necessário usar strcmp
+			}
+		}
+
+		if (!hasTransitions) {
+			ss << "\t\t\t\t\tdefault:\n";
+			ss << "\t\t\t\t\t\tnextState = -1;\n";
+		}
+
+		ss << "\t\t\t\t}\n";
+		ss << "\t\t\t\tbreak;\n\n";
+	}
+
+	ss << "\t\t\tdefault:\n";
+	ss << "\t\t\t\tnextState = -1;\n";
+	ss << "\t\t\t\tbreak;\n";
+	ss << "\t\t}\n\n";
+
+	ss << "\t\tif (nextState == -1) break;\n\n";
+
+	ss << "\t\tcurrentState = nextState;\n";
+	ss << "\t\ttoken.value[*pos - tokenStart] = c;\n";
+	ss << "\t\t(*pos)++;\n\n";
+
+	ss << "\t\t// Verificar se é estado final (longest match)\n";
+	ss << "\t\tswitch (currentState) {\n";
+
+	for (int state = 0; state < numStates; ++state) {
+		if (this->finals.count(state)) {
+			ss << "\t\t\tcase " << state << ":\n";
+			if (this->stateToToken.count(state)) {
+				ss << "\t\t\t\tlastFinalState = " << this->stateToToken.at(state) << ";\n";
+			}
+			ss << "\t\t\t\tlastFinalPos = *pos;\n";
+			ss << "\t\t\t\tbreak;\n";
+		}
+	}
+
+	ss << "\t\t\tdefault:\n";
+	ss << "\t\t\t\tbreak;\n";
+	ss << "\t\t}\n";
+	ss << "\t}\n\n";
+
+	ss << "\t// Retornar ao último estado final (longest match)\n";
+	ss << "\tif (lastFinalState != -1) {\n";
+	ss << "\t\ttoken.type = lastFinalState;\n";
+	ss << "\t\t*pos = lastFinalPos;\n";
+	ss << "\t\ttoken.value[lastFinalPos - tokenStart] = '\\0';\n";
+	ss << "\t}\n\n";
+
+	ss << "\treturn token;\n";
+	ss << "}\n\n";
+
+	// Função de teste
+	ss << "// Função de teste (descomente para usar)\n";
+	ss << "/*\n";
+	ss << "int main() {\n";
+	ss << "\tconst char* input = \"seu_input_aqui\";\n";
+	ss << "\tint pos = 0;\n";
+	ss << "\tstruct Token token;\n\n";
+
+	ss << "\twhile (pos < strlen(input)) {\n";
+	ss << "\t\ttoken = scanToken(input, &pos);\n";
+	ss << "\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\tprintf(\"Token tipo %d: '%s'\\\\n\", token.type, token.value);\n";
+	ss << "\t\t} else {\n";
+	ss << "\t\t\tprintf(\"Erro: símbolo desconhecido '%c'\\\\n\", input[pos]);\n";
+	ss << "\t\t\tpos++;\n";
+	ss << "\t\t}\n";
+	ss << "\t}\n";
+	ss << "\treturn 0;\n";
+	ss << "}\n";
+	ss << "*/\n";
+
+	return ss.str();
 }
