@@ -1,1 +1,5 @@
 /.vscode
+*.ps1
+build_and_run.sh
+main/automaton.exe
+/main/automaton.dSYM
