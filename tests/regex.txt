@@ -1,0 +1,8 @@
+TOKEN_A: a
+TOKEN_SEQUENCE: a \b c . .
+TOKEN_KLEENE: a b . c . *
+TOKEN_INPUT: a b . input * .
+TOKEN_OPTIONAL: a b . c ? d . . +
+TOKEN_TAB: a \t * .
+TOKEN_DIGIT: [0-9]
+TOKEN_LETTER: [x-z]

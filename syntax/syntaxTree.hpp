@@ -47,6 +47,7 @@ class regularExpressionToken {
     private:
         bool isOperator(string c);
         bool IsOperatorUnary(string c);
+        string expandCharacterClasses(string regularExpression);
 };
 
 vector<string> readRegexFromFile(const string& filename);

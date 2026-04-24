@@ -64,7 +64,61 @@ OperativeNodeBinary::~OperativeNodeBinary() {
 }
 
 // Implementações da classe regularExpressionToken
+string regularExpressionToken::expandCharacterClasses(string regularExpression) {
+    string result = "";
+    size_t i = 0;
+    while (i < regularExpression.size()) {
+        if (regularExpression[i] == '[') {
+            // Encontra ]
+            size_t closeIdx = regularExpression.find(']', i);
+            if (closeIdx != string::npos) {
+                string charClass = regularExpression.substr(i + 1, closeIdx - i - 1);
+                
+                // Procura por um intervalo (ex: a-Z)
+                size_t dashIdx = charClass.find('-');
+                if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
+                    char start = charClass[dashIdx - 1];
+                    char end = charClass[dashIdx + 1];
+                    
+                    // Expande o intervalo (ex: [a-Z] -> a b c ... Z)
+                    for (char c = start; c <= end; ++c) {
+                        if (c == start) {
+                            result += c;
+                        } else {
+                            result += " ";
+                            result += c;
+                            result += " |";
+                        }
+                    }
+                } else {
+                    // Não é um intervalo, apenas uma lista de caracteres (ex: [abc] -> a | b | c)
+                    for (size_t j = 0; j < charClass.size(); ++j) {
+                        if (j == 0) {
+                            result += charClass[j];
+                        } else {
+                            result += " ";
+                            result += charClass[j];
+                            result += " |";
+                        }
+                    }
+                }
+                i = closeIdx + 1;
+            } else {
+                result += regularExpression[i];
+                ++i;
+            }
+        } else {
+            result += regularExpression[i];
+            ++i;
+        }
+    }
+    return result;
+}
+
 Node* regularExpressionToken::createSyntaxTree(string regularExpression){
+    // (ex: [a-Z] -> (a|b|c|...|Z))
+    regularExpression = expandCharacterClasses(regularExpression);
+    
     // Lógica para criar a árvore de sintaxe a partir da expressão regular
     stack<Node*> pilha;
     // push, top, pop, empty (mostra se ta vazia), size

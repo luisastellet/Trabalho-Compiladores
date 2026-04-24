@@ -29,20 +29,37 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 
 int main() {
 	regularExpressionToken ret;
-	vector<string> lines = readRegexFromFile("./input.txt");
+	vector<string> lines = readRegexFromFile("./tests/regex.txt");
 	if (lines.empty()) {
 		cout << "Erro ao ler input.txt" << endl;
 		return 1;
 	}
 
 	vector<DFA> minimizedDFAs;
+	vector<string> tokenNames;
 	set<string> globalSymbols;
 	
 	for (const auto& line : lines) {
+		// Esperar formato: TOKEN_NAME: regex
+		size_t colonPos = line.find(':');
+		string tokenName = "TOKEN";  // Nome default caso não haja token especificado
+		string regexLine = line;     // A parte da regex (pode ser a linha inteira se não houver token name)
+		
+		if (colonPos != string::npos) {
+			tokenName = line.substr(0, colonPos);
+			regexLine = line.substr(colonPos + 1);  // A parte da regex após os dois pontos
+			// Tira o espaço extra no início da regex
+			if (!regexLine.empty() && regexLine[0] == ' ') {
+				regexLine = regexLine.substr(1);
+			}
+		}
+		
+		tokenNames.push_back(tokenName);
+		
 		cout << string(80, '=') << endl;
 		cout << "Expressão regular: " << line << endl;
 		cout << string(80, '=') << endl;
-		Node* tree = ret.createSyntaxTree(line);
+		Node* tree = ret.createSyntaxTree(regexLine);
 		set<string> symbols;
 		vector<string> alphabet = getAlphabet(tree, symbols);
 		globalSymbols.insert(symbols.begin(), symbols.end());
@@ -87,7 +104,7 @@ int main() {
 			cout << string(80, '=') << endl;
 			cout << "GERANDO SCANNER EM C..." << endl;
 			cout << string(80, '=') << endl;
-			string scannerCode = dfaUnion.generateCScanner(globalAlphabet);
+			string scannerCode = dfaUnion.generateCScanner(globalAlphabet, tokenNames);
 			
 			// Salvar em arquivo
 			ofstream scannerFile("./scanner.c");

@@ -21,7 +21,7 @@ public:
 	void minimize(const vector<string>& alphabet);
 	void printDFA(const vector<string>& alphabet) const;
 	NFA toNFA(const vector<string>& alphabet) const;
-	string generateCScanner(const vector<string>& alphabet) const;
+	string generateCScanner(const vector<string>& alphabet, const vector<string>& tokenNames) const;
 
 	static DFA unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int& stateCount);
 };

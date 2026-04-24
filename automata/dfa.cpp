@@ -289,18 +289,19 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 	return unionDfa;
 }
 
-string DFA::generateCScanner(const vector<string>& alphabet) const {
+string DFA::generateCScanner(const vector<string>& alphabet, const vector<string>& tokenNames) const {
 	stringstream ss;
 	int numStates = this->transitions.size();
 
 	// Header
 	ss << "#include <stdio.h>\n";
-	ss << "#include <string.h>\n\n";
+	ss << "#include <string.h>\n";
+	ss << "#include <stdlib.h>\n\n";
 
 	// Estrutura para armazenar o resultado do scanner
 	ss << "struct Token {\n";
-	ss << "\tint type;        // ID do token (-1 = erro)\n";
-	ss << "\tchar value[256]; // Valor do token\n";
+	ss << "\tchar type[64];       // Nome do token \n";
+	ss << "\tchar value[256];     // Valor do token\n";
 	ss << "};\n\n";
 
 	// Função helper para match de símbolos (incluindo multi-char)
@@ -312,10 +313,11 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "}\n\n";
 
 	// Função scanner principal
-	ss << "struct Token scanToken(const char* input, int* pos) {\n";
+	ss << "struct Token scanToken(const char* input, int* pos, const char* tokenNames[" << tokenNames.size() << "]) {\n";
 	ss << "\tstruct Token token;\n";
-	ss << "\ttoken.type = -1;\n";
-	ss << "\tmemset(token.value, 0, sizeof(token.value));\n\n";
+	ss << "\tmemset(token.type, 0, sizeof(token.type));\n";
+	ss << "\tmemset(token.value, 0, sizeof(token.value));\n";
+	ss << "\tstrcpy(token.type, \"ERROR\");\n\n";
 
 	ss << "\tint currentState = " << this->start << ";\n";
 	ss << "\tint lastFinalState = -1;\n";
@@ -406,8 +408,8 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\t}\n\n";
 
 	ss << "\t// Retornar ao último estado final (longest match)\n";
-	ss << "\tif (lastFinalState != -1) {\n";
-	ss << "\t\ttoken.type = lastFinalState;\n";
+	ss << "\tif (lastFinalState != -1 && lastFinalState >= 0 && lastFinalState < " << tokenNames.size() << ") {\n";
+	ss << "\t\tstrcpy(token.type, tokenNames[lastFinalState]);\n";
 	ss << "\t\t*pos = lastFinalPos;\n";
 	ss << "\t\ttoken.value[lastFinalPos - tokenStart] = '\\0';\n";
 	ss << "\t}\n\n";
@@ -417,6 +419,15 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 
 	// Função main integrada que lê de arquivo
 	ss << "int main() {\n";
+	ss << "\t// Initialize token names array\n";
+	ss << "\tconst char* tokenNames[" << tokenNames.size() << "] = {\n";
+	for (size_t i = 0; i < tokenNames.size(); ++i) {
+		ss << "\t\t\"" << tokenNames[i] << "\"";
+		if (i < tokenNames.size() - 1) ss << ",";
+		ss << "\n";
+	}
+	ss << "\t};\n\n";
+
 	ss << "\tFILE* file = fopen(\"tests/test_input.txt\", \"r\");\n";
 	ss << "\tif (!file) {\n";
 	ss << "\t\tperror(\"Erro ao abrir tests/test_input.txt\");\n";
@@ -427,10 +438,10 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\tprintf(\"═════════════════════════════════════\\n\\n\");\n\n";
 
 	ss << "\tprintf(\"Expressões Regulares:\\n\");\n";
-	ss << "\tprintf(\"  Token 0: a b . c . *       (ab, abc, abcc, ...)\\n\");\n";
-	ss << "\tprintf(\"  Token 1: a \\\\b c . .       (a, \\\\b, c)\\n\");\n";
-	ss << "\tprintf(\"  Token 2: a b . input * .   (ab, input, input*)\\n\");\n";
-	ss << "\tprintf(\"  Token 3: a b . c ? d . . + (ab(c|d) repetido)\\n\\n\");\n\n";
+	for (size_t i = 0; i < tokenNames.size(); ++i) {
+		ss << "\tprintf(\"  %s\\n\", tokenNames[" << i << "]);\n";
+	}
+	ss << "\tprintf(\"\\n\");\n\n";
 
 	ss << "\tprintf(\"Testes:\\n\");\n";
 	ss << "\tprintf(\"─────────────────────────────────────\\n\");\n\n";
@@ -482,10 +493,10 @@ string DFA::generateCScanner(const vector<string>& alphabet) const {
 	ss << "\t\tprintf(\"Entrada: %s → \", inputDisplay);\n\n";
 
 	ss << "\t\tint pos = 0;\n";
-	ss << "\t\tstruct Token token = scanToken(processedInput, &pos);\n\n";
+	ss << "\t\tstruct Token token = scanToken(processedInput, &pos, tokenNames);\n\n";
 
-	ss << "\t\tif (token.type >= 0) {\n";
-	ss << "\t\t\tprintf(\"Token %d ('\", token.type);\n";
+	ss << "\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
+	ss << "\t\t\tprintf(\"%s ('\", token.type);\n";
 	ss << "\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
 	ss << "\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
 	ss << "\t\t\t\t\tprintf(\"%c\", token.value[i]);\n";

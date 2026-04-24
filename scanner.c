@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct Token {
-	int type;        // ID do token (-1 = erro)
-	char value[256]; // Valor do token
+	char type[64];       // Token name
+	char value[256];     // Valor do token
 };
 
 // Função helper para comparar símbolo no input
@@ -13,10 +14,11 @@ int matchSymbol(const char* input, int pos, const char* symbol) {
 	return 0;
 }
 
-struct Token scanToken(const char* input, int* pos) {
+struct Token scanToken(const char* input, int* pos, const char* tokenNames[8]) {
 	struct Token token;
-	token.type = -1;
+	memset(token.type, 0, sizeof(token.type));
 	memset(token.value, 0, sizeof(token.value));
+	strcpy(token.type, "ERROR");
 
 	int currentState = 0;
 	int lastFinalState = -1;
@@ -29,52 +31,94 @@ struct Token scanToken(const char* input, int* pos) {
 
 		switch (currentState) {
 			case 0: {
-				if (input[*pos] == 'a') {
+				if (input[*pos] == '0') {
 					nextState = 1;
 					symbolLen = 1;
 				}
-				break;
-			}
-
-			case 1: {
-				if ((symbolLen = matchSymbol(input, *pos, "\b"))) {
+ else if (input[*pos] == '1') {
+					nextState = 1;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '2') {
 					nextState = 2;
+					symbolLen = 1;
 				}
- else if ((symbolLen = matchSymbol(input, *pos, "\t"))) {
+ else if (input[*pos] == '3') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '4') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '5') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '6') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '7') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '8') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == '9') {
+					nextState = 2;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == 'a') {
 					nextState = 3;
+					symbolLen = 1;
 				}
- else if (input[*pos] == 'b') {
+ else if (input[*pos] == 'x') {
 					nextState = 4;
 					symbolLen = 1;
 				}
-				break;
-			}
-
-			case 2: {
-				if (input[*pos] == 'c') {
+ else if (input[*pos] == 'y') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == 'z') {
 					nextState = 5;
 					symbolLen = 1;
 				}
 				break;
 			}
 
+			case 1: {
+				if (input[*pos] == '1') {
+					nextState = 1;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 2: {
+				break;
+			}
+
 			case 3: {
-				if ((symbolLen = matchSymbol(input, *pos, "\t"))) {
-					nextState = 3;
+				if ((symbolLen = matchSymbol(input, *pos, "\b"))) {
+					nextState = 6;
+				}
+ else if ((symbolLen = matchSymbol(input, *pos, "\t"))) {
+					nextState = 7;
+				}
+ else if (input[*pos] == 'b') {
+					nextState = 8;
+					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 4: {
-				if ((symbolLen = matchSymbol(input, *pos, "input"))) {
-					nextState = 8;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 7;
+				if (input[*pos] == 'y') {
+					nextState = 4;
 					symbolLen = 1;
 				}
 				break;
@@ -85,79 +129,113 @@ struct Token scanToken(const char* input, int* pos) {
 			}
 
 			case 6: {
-				if (input[*pos] == 'a') {
+				if (input[*pos] == 'c') {
 					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 7: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
+				if ((symbolLen = matchSymbol(input, *pos, "\t"))) {
+					nextState = 7;
 				}
 				break;
 			}
 
 			case 8: {
 				if ((symbolLen = matchSymbol(input, *pos, "input"))) {
-					nextState = 8;
+					nextState = 12;
 				}
-				break;
-			}
-
-			case 9: {
-				if (input[*pos] == 'b') {
+ else if (input[*pos] == 'c') {
+					nextState = 10;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == 'd') {
 					nextState = 11;
 					symbolLen = 1;
 				}
 				break;
 			}
 
+			case 9: {
+				break;
+			}
+
 			case 10: {
-				if (input[*pos] == 'b') {
-					nextState = 12;
+				if (input[*pos] == 'a') {
+					nextState = 13;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == 'd') {
+					nextState = 11;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 11: {
-				if (input[*pos] == 'c') {
-					nextState = 13;
+				if (input[*pos] == 'a') {
+					nextState = 14;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 12: {
-				if (input[*pos] == 'c') {
-					nextState = 14;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 7;
-					symbolLen = 1;
+				if ((symbolLen = matchSymbol(input, *pos, "input"))) {
+					nextState = 12;
 				}
 				break;
 			}
 
 			case 13: {
-				if (input[*pos] == 'a') {
-					nextState = 9;
+				if (input[*pos] == 'b') {
+					nextState = 15;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 14: {
+				if (input[*pos] == 'b') {
+					nextState = 16;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 15: {
+				if (input[*pos] == 'c') {
+					nextState = 17;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 16: {
+				if (input[*pos] == 'c') {
+					nextState = 18;
+					symbolLen = 1;
+				}
+ else if (input[*pos] == 'd') {
+					nextState = 11;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 17: {
+				if (input[*pos] == 'a') {
+					nextState = 13;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 18: {
 				if (input[*pos] == 'd') {
-					nextState = 7;
+					nextState = 11;
 					symbolLen = 1;
 				}
 				break;
@@ -180,35 +258,51 @@ struct Token scanToken(const char* input, int* pos) {
 		// Verificar se é estado final (longest match)
 		switch (currentState) {
 			case 1:
-				lastFinalState = 4;
+				lastFinalState = 6;
+				lastFinalPos = *pos;
+				break;
+			case 2:
+				lastFinalState = 6;
 				lastFinalPos = *pos;
 				break;
 			case 3:
-				lastFinalState = 4;
-				lastFinalPos = *pos;
-				break;
-			case 4:
-				lastFinalState = 2;
-				lastFinalPos = *pos;
-				break;
-			case 5:
 				lastFinalState = 0;
 				lastFinalPos = *pos;
 				break;
-			case 6:
-				lastFinalState = 1;
+			case 4:
+				lastFinalState = 7;
+				lastFinalPos = *pos;
+				break;
+			case 5:
+				lastFinalState = 7;
 				lastFinalPos = *pos;
 				break;
 			case 7:
-				lastFinalState = 3;
+				lastFinalState = 5;
 				lastFinalPos = *pos;
 				break;
 			case 8:
+				lastFinalState = 3;
+				lastFinalPos = *pos;
+				break;
+			case 9:
+				lastFinalState = 1;
+				lastFinalPos = *pos;
+				break;
+			case 10:
 				lastFinalState = 2;
 				lastFinalPos = *pos;
 				break;
-			case 13:
-				lastFinalState = 1;
+			case 11:
+				lastFinalState = 4;
+				lastFinalPos = *pos;
+				break;
+			case 12:
+				lastFinalState = 3;
+				lastFinalPos = *pos;
+				break;
+			case 17:
+				lastFinalState = 2;
 				lastFinalPos = *pos;
 				break;
 			default:
@@ -217,8 +311,8 @@ struct Token scanToken(const char* input, int* pos) {
 	}
 
 	// Retornar ao último estado final (longest match)
-	if (lastFinalState != -1) {
-		token.type = lastFinalState;
+	if (lastFinalState != -1 && lastFinalState >= 0 && lastFinalState < 8) {
+		strcpy(token.type, tokenNames[lastFinalState]);
 		*pos = lastFinalPos;
 		token.value[lastFinalPos - tokenStart] = '\0';
 	}
@@ -227,6 +321,18 @@ struct Token scanToken(const char* input, int* pos) {
 }
 
 int main() {
+	// Initialize token names array
+	const char* tokenNames[8] = {
+		"TOKEN_A",
+		"TOKEN_SEQUENCE",
+		"TOKEN_KLEENE",
+		"TOKEN_INPUT",
+		"TOKEN_OPTIONAL",
+		"TOKEN_TAB",
+		"TOKEN_DIGIT",
+		"TOKEN_LETTER"
+	};
+
 	FILE* file = fopen("tests/test_input.txt", "r");
 	if (!file) {
 		perror("Erro ao abrir tests/test_input.txt");
@@ -237,10 +343,15 @@ int main() {
 	printf("═════════════════════════════════════\n\n");
 
 	printf("Expressões Regulares:\n");
-	printf("  Token 0: a b . c . *       (ab, abc, abcc, ...)\n");
-	printf("  Token 1: a \\b c . .       (a, \\b, c)\n");
-	printf("  Token 2: a b . input * .   (ab, input, input*)\n");
-	printf("  Token 3: a b . c ? d . . + (ab(c|d) repetido)\n\n");
+	printf("  %s\n", tokenNames[0]);
+	printf("  %s\n", tokenNames[1]);
+	printf("  %s\n", tokenNames[2]);
+	printf("  %s\n", tokenNames[3]);
+	printf("  %s\n", tokenNames[4]);
+	printf("  %s\n", tokenNames[5]);
+	printf("  %s\n", tokenNames[6]);
+	printf("  %s\n", tokenNames[7]);
+	printf("\n");
 
 	printf("Testes:\n");
 	printf("─────────────────────────────────────\n");
@@ -292,10 +403,10 @@ int main() {
 		printf("Entrada: %s → ", inputDisplay);
 
 		int pos = 0;
-		struct Token token = scanToken(processedInput, &pos);
+		struct Token token = scanToken(processedInput, &pos, tokenNames);
 
-		if (token.type >= 0) {
-			printf("Token %d ('", token.type);
+		if (strcmp(token.type, "ERROR") != 0) {
+			printf("%s ('", token.type);
 			for (int i = 0; token.value[i] != '\0'; i++) {
 				if (token.value[i] >= 32 && token.value[i] < 127) {
 					printf("%c", token.value[i]);
