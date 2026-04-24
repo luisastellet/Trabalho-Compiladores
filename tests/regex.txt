@@ -1,8 +1,7 @@
-TOKEN_A: a
-TOKEN_SEQUENCE: a \b c . .
-TOKEN_KLEENE: a b . c . *
-TOKEN_INPUT: a b . input * .
-TOKEN_OPTIONAL: a b . c ? d . . +
-TOKEN_TAB: a \t * .
+TOKEN_IF: i f .
+TOKEN_ELSE: e l . s . e .
+TOKEN_INT: [1-9] [0-9] * .
+TOKEN_STRING: " [a-z] * . " .
+TOKEN_LETTER: [A-Z]
 TOKEN_DIGIT: [0-9]
-TOKEN_LETTER: [x-z]
+TOKEN_BLANKSPACE_EXAMPLE: a \b . a .

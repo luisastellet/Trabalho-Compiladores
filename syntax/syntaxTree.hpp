@@ -38,6 +38,16 @@ class OperativeNodeBinary : public Node {
         ~OperativeNodeBinary();
 };
 
+class CharacterClassNode : public Node {
+    string charClass;  // ex: "0-9", "abc"
+
+    public:
+        CharacterClassNode(string c);
+        string getCharClass() const;
+        void print(int indent = 0) override;
+        ~CharacterClassNode();
+};
+
 class regularExpressionToken {
     string tokenType;
 

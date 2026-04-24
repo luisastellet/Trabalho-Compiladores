@@ -217,6 +217,58 @@ void NFA::printNFA(const vector<string>& alphabet) const {
 
 NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 	if (!node) throw runtime_error("Nó nulo na árvore sintática");
+	
+	if (dynamic_cast<CharacterClassNode*>(node)) {
+		CharacterClassNode* cc = static_cast<CharacterClassNode*>(node);
+		string charClass = cc->getCharClass();
+		
+		int startState = stateCount++;
+		int f = stateCount++;
+		vector<vector<set<int>>> transitions(f + 1, vector<set<int>>(alphabet.size() + 1));
+		
+		vector<char> chars;
+		
+		// Verificar se é um range (ex: 0-9)
+		if (charClass.size() >= 3) {
+			size_t dashIdx = charClass.find('-');
+			if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
+				char start = charClass[dashIdx - 1];
+				char end = charClass[dashIdx + 1];
+				for (char c = start; c <= end; ++c) {
+					chars.push_back(c);
+				}
+			} else {
+				// Caracteres individuais  (ex: abc)
+				for (char c : charClass) {
+					chars.push_back(c);
+				}
+			}
+		} else {
+			// Caracter único
+			for (char c : charClass) {
+				chars.push_back(c);
+			}
+		}
+		
+		// Adicionar transições para cada caractere
+		for (char c : chars) {
+			string charStr(1, c);
+			int idx = -1;
+			for (size_t i = 0; i < alphabet.size(); ++i) {
+				if (charStr == alphabet[i]) {
+					idx = static_cast<int>(i);
+					break;
+				}
+			}
+			if (idx != -1) {
+				transitions[startState][idx].insert(f);
+			}
+		}
+		
+		NFA nfa = {startState, f, transitions};
+		return nfa;
+	}
+	
 	// Operador unário
 	if (dynamic_cast<OperativeNodeUnary*>(node)) {
 		OperativeNodeUnary* u = static_cast<OperativeNodeUnary*>(node);

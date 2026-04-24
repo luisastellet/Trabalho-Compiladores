@@ -419,7 +419,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 
 	// Função main integrada que lê de arquivo
 	ss << "int main() {\n";
-	ss << "\t// Initialize token names array\n";
+	ss << "\t// Inicializar array de nomes de tokens\n";
 	ss << "\tconst char* tokenNames[" << tokenNames.size() << "] = {\n";
 	for (size_t i = 0; i < tokenNames.size(); ++i) {
 		ss << "\t\t\"" << tokenNames[i] << "\"";
@@ -434,6 +434,15 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\treturn 1;\n";
 	ss << "\t}\n\n";
 
+	ss << "\t// Lê o conteúdo do arquivo\n";
+	ss << "\tfseek(file, 0, SEEK_END);\n";
+	ss << "\tlong fileSize = ftell(file);\n";
+	ss << "\trewind(file);\n";
+	ss << "\tchar* fileContent = (char*)malloc(fileSize + 1);\n";
+	ss << "\tfread(fileContent, 1, fileSize, file);\n";
+	ss << "\tfileContent[fileSize] = '\\0';\n";
+	ss << "\tfclose(file);\n\n";
+
 	ss << "\tprintf(\"Scanner Léxico Gerado\\n\");\n";
 	ss << "\tprintf(\"═════════════════════════════════════\\n\\n\");\n\n";
 
@@ -443,75 +452,72 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	}
 	ss << "\tprintf(\"\\n\");\n\n";
 
-	ss << "\tprintf(\"Testes:\\n\");\n";
-	ss << "\tprintf(\"─────────────────────────────────────\\n\");\n\n";
+	ss << "\tprintf(\"Tokenização do arquivo:\\n\");\n";
+	ss << "\tprintf(\"─────────────────────────────────────\\n\\n\");\n\n";
 
-	ss << "\tchar line[512];\n\n";
+	ss << "\t// Separar tokens por espaços, tabs e newlines\n";
+	ss << "\tchar tokenBuffer[512];\n";
+	ss << "\tint tokenIdx = 0;\n";
+	ss << "\tint tokenCount = 0;\n\n";
 
-	ss << "\twhile (fgets(line, sizeof(line), file)) {\n";
-	ss << "\t\t// Remover quebra de linha\n";
-	ss << "\t\tsize_t len = strlen(line);\n";
-	ss << "\t\tif (len > 0 && line[len-1] == '\\n') {\n";
-	ss << "\t\t\tline[len-1] = '\\0';\n";
-	ss << "\t\t}\n";
-	ss << "\t\t// Ignorar linhas vazias\n";
-	ss << "\t\tif (strlen(line) == 0) continue;\n\n";
-
-	ss << "\t\t// Remover aspas de contorno se existirem\n";
-	ss << "\t\tchar* input = line;\n";
-	ss << "\t\tchar inputDisplay[512];\n";
-	ss << "\t\tstrcpy(inputDisplay, line);\n\n";
-
-	ss << "\t\tif (line[0] == '\\\"' && line[strlen(line)-1] == '\\\"') {\n";
-	ss << "\t\t\tinput = &line[1];\n";
-	ss << "\t\t\tline[strlen(line)-1] = '\\0';\n";
-	ss << "\t\t}\n\n";
-
-	ss << "\t\t// Processar sequências de escape\n";
-	ss << "\t\tchar processedInput[512];\n";
-	ss << "\t\tint processedLen = 0;\n";
-	ss << "\t\tfor (int j = 0; input[j] && processedLen < 511; j++) {\n";
-	ss << "\t\t\tif (input[j] == '\\\\' && input[j+1]) {\n";
-	ss << "\t\t\t\tif (input[j+1] == 'b') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\b';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else if (input[j+1] == 'n') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\n';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else if (input[j+1] == 't') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\t';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
-	ss << "\t\t\t\t}\n";
+	ss << "\tfor (int i = 0; fileContent[i] != '\\0'; i++) {\n";
+	ss << "\t\tchar c = fileContent[i];\n";
+	ss << "\t\tif (c == '\\\\' && fileContent[i+1]) {\n";
+	ss << "\t\t\tif (fileContent[i+1] == 'b') {\n";
+	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\b';\n";
+	ss << "\t\t\t\ti++;\n";
+	ss << "\t\t\t} else if (fileContent[i+1] == 't') {\n";
+	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\t';\n";
+	ss << "\t\t\t\ti++;\n";
+	ss << "\t\t\t} else if (fileContent[i+1] == 'n') {\n";
+	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\n';\n";
+	ss << "\t\t\t\ti++;\n";
 	ss << "\t\t\t} else {\n";
-	ss << "\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
+	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = c;\n";
 	ss << "\t\t\t}\n";
-	ss << "\t\t}\n";
-	ss << "\t\tprocessedInput[processedLen] = '\\0';\n\n";
-
-	ss << "\t\tprintf(\"Entrada: %s → \", inputDisplay);\n\n";
-
-	ss << "\t\tint pos = 0;\n";
-	ss << "\t\tstruct Token token = scanToken(processedInput, &pos, tokenNames);\n\n";
-
-	ss << "\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
-	ss << "\t\t\tprintf(\"%s ('\", token.type);\n";
-	ss << "\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
-	ss << "\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
-	ss << "\t\t\t\t\tprintf(\"%c\", token.value[i]);\n";
-	ss << "\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[i]);\n";
+	ss << "\t\t} else if (c == ' ' || c == '\\n' || c == '\\t') {\n";
+	ss << "\t\t\tif (tokenIdx > 0) {\n";
+	ss << "\t\t\t\ttokenBuffer[tokenIdx] = '\\0';\n";
+	ss << "\t\t\t\tint pos = 0;\n";
+	ss << "\t\t\t\tstruct Token token = scanToken(tokenBuffer, &pos, tokenNames);\n";
+	ss << "\t\t\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
+	ss << "\t\t\t\t\tprintf(\"Token %d: %s = '\", ++tokenCount, token.type);\n";
+	ss << "\t\t\t\t\tfor (int j = 0; token.value[j] != '\\0'; j++) {\n";
+	ss << "\t\t\t\t\t\tif (token.value[j] >= 32 && token.value[j] < 127) {\n";
+	ss << "\t\t\t\t\t\t\tprintf(\"%c\", token.value[j]);\n";
+	ss << "\t\t\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[j]);\n";
+	ss << "\t\t\t\t\t\t}\n";
+	ss << "\t\t\t\t\t}\n";
+	ss << "\t\t\t\t\tprintf(\"'\\n\");\n";
 	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t\ttokenIdx = 0;\n";
 	ss << "\t\t\t}\n";
-	ss << "\t\t\tprintf(\"')\\n\");\n";
 	ss << "\t\t} else {\n";
-	ss << "\t\t\tprintf(\"Não reconhecido\\n\");\n";
+	ss << "\t\t\ttokenBuffer[tokenIdx++] = c;\n";
 	ss << "\t\t}\n";
 	ss << "\t}\n\n";
 
-	ss << "\tfclose(file);\n";
-	ss << "\tprintf(\"\\n\\n\");\n";
+	ss << "\t// Último token\n";
+	ss << "\tif (tokenIdx > 0) {\n";
+	ss << "\t\ttokenBuffer[tokenIdx] = '\\0';\n";
+	ss << "\t\tint pos = 0;\n";
+	ss << "\t\tstruct Token token = scanToken(tokenBuffer, &pos, tokenNames);\n";
+	ss << "\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
+	ss << "\t\t\tprintf(\"Token %d: %s = '\", ++tokenCount, token.type);\n";
+	ss << "\t\t\tfor (int j = 0; token.value[j] != '\\0'; j++) {\n";
+	ss << "\t\t\t\tif (token.value[j] >= 32 && token.value[j] < 127) {\n";
+	ss << "\t\t\t\t\tprintf(\"%c\", token.value[j]);\n";
+	ss << "\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[j]);\n";
+	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t}\n";
+	ss << "\t\t\tprintf(\"'\\n\");\n";
+	ss << "\t\t}\n";
+	ss << "\t}\n\n";
+
+	ss << "\tfree(fileContent);\n";
+	ss << "\tprintf(\"\\nTotal de tokens reconhecidos: %d\\n\\n\", tokenCount);\n";
 	ss << "\treturn 0;\n";
 	ss << "}\n";
 

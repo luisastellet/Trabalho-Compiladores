@@ -63,6 +63,21 @@ OperativeNodeBinary::~OperativeNodeBinary() {
     delete rightOperand;
 }
 
+// Implementações da classe CharacterClassNode
+CharacterClassNode::CharacterClassNode(string c) : Node("[") {
+    charClass = c;
+}
+
+string CharacterClassNode::getCharClass() const {
+    return charClass;
+}
+
+void CharacterClassNode::print(int indent) {
+    cout << string(indent, ' ') << "[" << charClass << "]" << endl;
+}
+
+CharacterClassNode::~CharacterClassNode() {}
+
 // Implementações da classe regularExpressionToken
 string regularExpressionToken::expandCharacterClasses(string regularExpression) {
     string result = "";
@@ -72,36 +87,10 @@ string regularExpressionToken::expandCharacterClasses(string regularExpression) 
             // Encontra ]
             size_t closeIdx = regularExpression.find(']', i);
             if (closeIdx != string::npos) {
-                string charClass = regularExpression.substr(i + 1, closeIdx - i - 1);
-                
-                // Procura por um intervalo (ex: a-Z)
-                size_t dashIdx = charClass.find('-');
-                if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
-                    char start = charClass[dashIdx - 1];
-                    char end = charClass[dashIdx + 1];
-                    
-                    // Expande o intervalo (ex: [a-Z] -> a b c ... Z)
-                    for (char c = start; c <= end; ++c) {
-                        if (c == start) {
-                            result += c;
-                        } else {
-                            result += " ";
-                            result += c;
-                            result += " |";
-                        }
-                    }
-                } else {
-                    // Não é um intervalo, apenas uma lista de caracteres (ex: [abc] -> a | b | c)
-                    for (size_t j = 0; j < charClass.size(); ++j) {
-                        if (j == 0) {
-                            result += charClass[j];
-                        } else {
-                            result += " ";
-                            result += charClass[j];
-                            result += " |";
-                        }
-                    }
-                }
+                // Keep the entire [...]  as a single token
+                result += " ";
+                result += regularExpression.substr(i, closeIdx - i + 1);
+                result += " ";
                 i = closeIdx + 1;
             } else {
                 result += regularExpression[i];
@@ -142,6 +131,11 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                         Node* newNode = new OperativeNodeBinary(reading, left, right);
                         pilha.push(newNode);
                     }
+                } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
+                    // Character class - extract content without brackets
+                    string charClass = reading.substr(1, reading.size() - 2);
+                    Node* newNode = new CharacterClassNode(charClass);
+                    pilha.push(newNode);
                 } else {
                     Node* newNode = new Node(reading);
                     pilha.push(newNode);
@@ -167,6 +161,11 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                 Node* newNode = new OperativeNodeBinary(reading, left, right);
                 pilha.push(newNode);
             }
+        } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
+            // Character class - extract content without brackets
+            string charClass = reading.substr(1, reading.size() - 2);
+            Node* newNode = new CharacterClassNode(charClass);
+            pilha.push(newNode);
         } else {
             Node* newNode = new Node(reading);
             pilha.push(newNode);

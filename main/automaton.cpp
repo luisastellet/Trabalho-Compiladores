@@ -20,6 +20,31 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 		OperativeNodeBinary* b = static_cast<OperativeNodeBinary*>(node);
 		getAlphabet(b->getLeftOperand(), symbols);
 		getAlphabet(b->getRightOperand(), symbols);
+	} else if (dynamic_cast<CharacterClassNode*>(node)) {
+		CharacterClassNode* cc = static_cast<CharacterClassNode*>(node);
+		string charClass = cc->getCharClass();
+		
+		// Verificar se é um range
+		if (charClass.size() >= 3) {
+			size_t dashIdx = charClass.find('-');
+			if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
+				char start = charClass[dashIdx - 1];
+				char end = charClass[dashIdx + 1];
+				for (char c = start; c <= end; ++c) {
+					symbols.insert(string(1, c));
+				}
+			} else {
+				// Caracteres individuais
+				for (char c : charClass) {
+					symbols.insert(string(1, c));
+				}
+			}
+		} else {
+			// Caracter único
+			for (char c : charClass) {
+				symbols.insert(string(1, c));
+			}
+		}
 	} else {
 		if (!node->getValue().empty() && node->getValue() != "ε" && node->getValue() != "epsilon")
 			symbols.insert(node->getValue());
