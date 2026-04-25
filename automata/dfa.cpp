@@ -296,12 +296,12 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	// Header
 	ss << "#include <stdio.h>\n";
 	ss << "#include <string.h>\n";
-	ss << "#include <stdlib.h>\n\n";
+	ss << "#include <ctype.h>\n\n";
 
 	// Estrutura para armazenar o resultado do scanner
 	ss << "struct Token {\n";
-	ss << "\tchar type[64];       // Nome do token \n";
-	ss << "\tchar value[256];     // Valor do token\n";
+	ss << "\tint type;        // ID do token (-1 = erro)\n";
+	ss << "\tchar value[256]; // Valor do token\n";
 	ss << "};\n\n";
 
 	// Função helper para match de símbolos (incluindo multi-char)
@@ -313,11 +313,10 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "}\n\n";
 
 	// Função scanner principal
-	ss << "struct Token scanToken(const char* input, int* pos, const char* tokenNames[" << tokenNames.size() << "]) {\n";
+	ss << "struct Token scanToken(const char* input, int* pos) {\n";
 	ss << "\tstruct Token token;\n";
-	ss << "\tmemset(token.type, 0, sizeof(token.type));\n";
-	ss << "\tmemset(token.value, 0, sizeof(token.value));\n";
-	ss << "\tstrcpy(token.type, \"ERROR\");\n\n";
+	ss << "\ttoken.type = -1;\n";
+	ss << "\tmemset(token.value, 0, sizeof(token.value));\n\n";
 
 	ss << "\tint currentState = " << this->start << ";\n";
 	ss << "\tint lastFinalState = -1;\n";
@@ -356,15 +355,20 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 			if (i == 0) ss << "\t\t\t\t";
 			else ss << " else ";
 
-			if (sym.length() == 1 && sym[0] != '\\') {
+			if (sym.length() == 1 && sym[0] != '\\' && sym[0] != '\'' && sym[0] != '\"') {
 				// Caractere simples
 				ss << "if (input[*pos] == '" << sym[0] << "') {\n";
 				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
 				ss << "\t\t\t\t\tsymbolLen = 1;\n";
 				ss << "\t\t\t\t}\n";
 			} else {
-				// String multi-caractere ou símbolo especial
-				ss << "if ((symbolLen = matchSymbol(input, *pos, \"" << sym << "\"))) {\n";
+				// String multi-caractere ou símbolo especial (escapar aspas se necessário)
+				string escapedSym = "";
+				for(char c : sym) {
+					if(c == '\"' || c == '\\') escapedSym += '\\';
+					escapedSym += c;
+				}
+				ss << "if ((symbolLen = matchSymbol(input, *pos, \"" << escapedSym << "\"))) {\n";
 				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
 				ss << "\t\t\t\t}\n";
 			}
@@ -384,7 +388,9 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\tcurrentState = nextState;\n";
 	ss << "\t\t// Adicionar símbolo ao valor do token\n";
 	ss << "\t\tfor (int i = 0; i < symbolLen; i++) {\n";
-	ss << "\t\t\ttoken.value[*pos - tokenStart + i] = input[*pos + i];\n";
+	ss << "\t\t\tif (*pos - tokenStart + i < 255) {\n";
+	ss << "\t\t\t\ttoken.value[*pos - tokenStart + i] = input[*pos + i];\n";
+	ss << "\t\t\t}\n";
 	ss << "\t\t}\n";
 	ss << "\t\t*pos += symbolLen;\n\n";
 
@@ -408,8 +414,8 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t}\n\n";
 
 	ss << "\t// Retornar ao último estado final (longest match)\n";
-	ss << "\tif (lastFinalState != -1 && lastFinalState >= 0 && lastFinalState < " << tokenNames.size() << ") {\n";
-	ss << "\t\tstrcpy(token.type, tokenNames[lastFinalState]);\n";
+	ss << "\tif (lastFinalState != -1) {\n";
+	ss << "\t\ttoken.type = lastFinalState;\n";
 	ss << "\t\t*pos = lastFinalPos;\n";
 	ss << "\t\ttoken.value[lastFinalPos - tokenStart] = '\\0';\n";
 	ss << "\t}\n\n";
@@ -419,12 +425,10 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 
 	// Função main integrada que lê de arquivo
 	ss << "int main() {\n";
-	ss << "\t// Inicializar array de nomes de tokens\n";
-	ss << "\tconst char* tokenNames[" << tokenNames.size() << "] = {\n";
+	// Nomes dos tokens
+	ss << "\tconst char* tokenNames[] = {\n";
 	for (size_t i = 0; i < tokenNames.size(); ++i) {
-		ss << "\t\t\"" << tokenNames[i] << "\"";
-		if (i < tokenNames.size() - 1) ss << ",";
-		ss << "\n";
+		ss << "\t\t\"" << tokenNames[i] << "\"" << (i == tokenNames.size() - 1 ? "" : ",") << "\n";
 	}
 	ss << "\t};\n\n";
 
@@ -434,90 +438,98 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\treturn 1;\n";
 	ss << "\t}\n\n";
 
-	ss << "\t// Lê o conteúdo do arquivo\n";
-	ss << "\tfseek(file, 0, SEEK_END);\n";
-	ss << "\tlong fileSize = ftell(file);\n";
-	ss << "\trewind(file);\n";
-	ss << "\tchar* fileContent = (char*)malloc(fileSize + 1);\n";
-	ss << "\tfread(fileContent, 1, fileSize, file);\n";
-	ss << "\tfileContent[fileSize] = '\\0';\n";
-	ss << "\tfclose(file);\n\n";
-
 	ss << "\tprintf(\"Scanner Léxico Gerado\\n\");\n";
 	ss << "\tprintf(\"═════════════════════════════════════\\n\\n\");\n\n";
 
-	ss << "\tprintf(\"Expressões Regulares:\\n\");\n";
+	ss << "\tprintf(\"Tokens definidos:\\n\");\n";
 	for (size_t i = 0; i < tokenNames.size(); ++i) {
-		ss << "\tprintf(\"  %s\\n\", tokenNames[" << i << "]);\n";
+		ss << "\tprintf(\"  Token %zu: %s\\n\", (size_t)" << i << ", tokenNames[" << i << "]);\n";
 	}
-	ss << "\tprintf(\"\\n\");\n\n";
+	ss << "\n";
 
-	ss << "\tprintf(\"Tokenização do arquivo:\\n\");\n";
-	ss << "\tprintf(\"─────────────────────────────────────\\n\\n\");\n\n";
+	ss << "\tprintf(\"Testes:\\n\");\n";
+	ss << "\tprintf(\"─────────────────────────────────────\\n\");\n\n";
 
-	ss << "\t// Separar tokens por espaços, tabs e newlines\n";
-	ss << "\tchar tokenBuffer[512];\n";
-	ss << "\tint tokenIdx = 0;\n";
-	ss << "\tint tokenCount = 0;\n\n";
+	ss << "\tchar line[512];\n\n";
 
-	ss << "\tfor (int i = 0; fileContent[i] != '\\0'; i++) {\n";
-	ss << "\t\tchar c = fileContent[i];\n";
-	ss << "\t\tif (c == '\\\\' && fileContent[i+1]) {\n";
-	ss << "\t\t\tif (fileContent[i+1] == 'b') {\n";
-	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\b';\n";
-	ss << "\t\t\t\ti++;\n";
-	ss << "\t\t\t} else if (fileContent[i+1] == 't') {\n";
-	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\t';\n";
-	ss << "\t\t\t\ti++;\n";
-	ss << "\t\t\t} else if (fileContent[i+1] == 'n') {\n";
-	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = '\\n';\n";
-	ss << "\t\t\t\ti++;\n";
-	ss << "\t\t\t} else {\n";
-	ss << "\t\t\t\ttokenBuffer[tokenIdx++] = c;\n";
-	ss << "\t\t\t}\n";
-	ss << "\t\t} else if (c == ' ' || c == '\\n' || c == '\\t') {\n";
-	ss << "\t\t\tif (tokenIdx > 0) {\n";
-	ss << "\t\t\t\ttokenBuffer[tokenIdx] = '\\0';\n";
-	ss << "\t\t\t\tint pos = 0;\n";
-	ss << "\t\t\t\tstruct Token token = scanToken(tokenBuffer, &pos, tokenNames);\n";
-	ss << "\t\t\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
-	ss << "\t\t\t\t\tprintf(\"Token %d: %s = '\", ++tokenCount, token.type);\n";
-	ss << "\t\t\t\t\tfor (int j = 0; token.value[j] != '\\0'; j++) {\n";
-	ss << "\t\t\t\t\t\tif (token.value[j] >= 32 && token.value[j] < 127) {\n";
-	ss << "\t\t\t\t\t\t\tprintf(\"%c\", token.value[j]);\n";
-	ss << "\t\t\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[j]);\n";
-	ss << "\t\t\t\t\t\t}\n";
-	ss << "\t\t\t\t\t}\n";
-	ss << "\t\t\t\t\tprintf(\"'\\n\");\n";
-	ss << "\t\t\t\t}\n";
-	ss << "\t\t\t\ttokenIdx = 0;\n";
-	ss << "\t\t\t}\n";
-	ss << "\t\t} else {\n";
-	ss << "\t\t\ttokenBuffer[tokenIdx++] = c;\n";
+	ss << "\twhile (fgets(line, sizeof(line), file)) {\n";
+	ss << "\t\t// Remover quebra de linha\n";
+	ss << "\t\tsize_t len = strlen(line);\n";
+	ss << "\t\tif (len > 0 && line[len-1] == '\\n') {\n";
+	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
-	ss << "\t}\n\n";
+	ss << "\t\tif (len > 0 && line[len-1] == '\\r') {\n"; // Handle Windows line endings
+	ss << "\t\t\tline[len-1] = '\\0';\n";
+	ss << "\t\t}\n";
 
-	ss << "\t// Último token\n";
-	ss << "\tif (tokenIdx > 0) {\n";
-	ss << "\t\ttokenBuffer[tokenIdx] = '\\0';\n";
-	ss << "\t\tint pos = 0;\n";
-	ss << "\t\tstruct Token token = scanToken(tokenBuffer, &pos, tokenNames);\n";
-	ss << "\t\tif (strcmp(token.type, \"ERROR\") != 0) {\n";
-	ss << "\t\t\tprintf(\"Token %d: %s = '\", ++tokenCount, token.type);\n";
-	ss << "\t\t\tfor (int j = 0; token.value[j] != '\\0'; j++) {\n";
-	ss << "\t\t\t\tif (token.value[j] >= 32 && token.value[j] < 127) {\n";
-	ss << "\t\t\t\t\tprintf(\"%c\", token.value[j]);\n";
+	ss << "\t\t// Ignorar linhas vazias\n";
+	ss << "\t\tif (strlen(line) == 0) continue;\n\n";
+
+	ss << "\t\t// Remover aspas de contorno se existirem\n";
+	ss << "\t\tchar* input = line;\n";
+	ss << "\t\tchar inputDisplay[512];\n";
+	ss << "\t\tstrcpy(inputDisplay, line);\n\n";
+
+	ss << "\t\tif (line[0] == '\\\"' && line[strlen(line)-1] == '\\\"') {\n";
+	ss << "\t\t\tinput = &line[1];\n";
+	ss << "\t\t\tline[strlen(line)-1] = '\\0';\n";
+	ss << "\t\t}\n\n";
+
+	ss << "\t\t// Processar sequências de escape\n";
+	ss << "\t\tchar processedInput[512];\n";
+	ss << "\t\tint processedLen = 0;\n";
+	ss << "\t\tfor (int j = 0; input[j] && processedLen < 511; j++) {\n";
+	ss << "\t\t\tif (input[j] == '\\\\' && input[j+1]) {\n";
+	ss << "\t\t\t\tif (input[j+1] == 'b') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\b';\n";
+	ss << "\t\t\t\t\tj++;\n";
+	ss << "\t\t\t\t} else if (input[j+1] == 'n') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\n';\n";
+	ss << "\t\t\t\t\tj++;\n";
+	ss << "\t\t\t\t} else if (input[j+1] == 't') {\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\t';\n";
+	ss << "\t\t\t\t\tj++;\n";
 	ss << "\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[j]);\n";
+	ss << "\t\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
 	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t} else {\n";
+	ss << "\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
 	ss << "\t\t\t}\n";
-	ss << "\t\t\tprintf(\"'\\n\");\n";
 	ss << "\t\t}\n";
+	ss << "\t\tprocessedInput[processedLen] = '\\0';\n\n";
+
+	ss << "\t\tprintf(\"Entrada: %s\\n\", inputDisplay);\n\n";
+
+	ss << "\t\tint pos = 0;\n";
+	ss << "\t\twhile (processedInput[pos] != '\\0') {\n";
+	ss << "\t\t\t// Ignorar espaços em branco entre tokens\n";
+	ss << "\t\t\twhile (processedInput[pos] != '\\0' && isspace(processedInput[pos])) {\n";
+	ss << "\t\t\t\tpos++;\n";
+	ss << "\t\t\t}\n";
+	ss << "\t\t\tif (processedInput[pos] == '\\0') break;\n\n";
+
+	ss << "\t\t\tstruct Token token = scanToken(processedInput, &pos);\n\n";
+
+	ss << "\t\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\t\tprintf(\"  -> %s ('\", tokenNames[token.type]);\n";
+	ss << "\t\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
+	ss << "\t\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
+	ss << "\t\t\t\t\t\tprintf(\"%c\", token.value[i]);\n";
+	ss << "\t\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[i]);\n";
+	ss << "\t\t\t\t\t}\n";
+	ss << "\t\t\t\t}\n";
+	ss << "\t\t\t\tprintf(\"')\\n\");\n";
+	ss << "\t\t\t} else {\n";
+	ss << "\t\t\t\tprintf(\"  -> Não reconhecido: '%c'\\n\", processedInput[pos]);\n";
+	ss << "\t\t\t\tpos++; // Avança um caractere para tentar continuar\n";
+	ss << "\t\t\t}\n";
+	ss << "\t\t}\n";
+	ss << "\t\tprintf(\"\\n\");\n";
 	ss << "\t}\n\n";
 
-	ss << "\tfree(fileContent);\n";
-	ss << "\tprintf(\"\\nTotal de tokens reconhecidos: %d\\n\\n\", tokenCount);\n";
+	ss << "\tfclose(file);\n";
+	ss << "\tprintf(\"\\n\");\n";
 	ss << "\treturn 0;\n";
 	ss << "}\n";
 
