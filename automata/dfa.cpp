@@ -423,8 +423,8 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\treturn token;\n";
 	ss << "}\n\n";
 
-	// Função main integrada que lê de arquivo
-	ss << "int main() {\n";
+	// Função main integrada que lê de arquivo e gera tokens.txt
+	ss << "int main(int argc, char* argv[]) {\n";
 	// Nomes dos tokens
 	ss << "\tconst char* tokenNames[] = {\n";
 	for (size_t i = 0; i < tokenNames.size(); ++i) {
@@ -432,9 +432,20 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	}
 	ss << "\t};\n\n";
 
-	ss << "\tFILE* file = fopen(\"tests/test_input.txt\", \"r\");\n";
+	ss << "\t// Verificar argumentos\n";
+	ss << "\tconst char* inputFile = (argc > 1) ? argv[1] : \"tests/test_input.txt\";\n";
+	ss << "\tconst char* outputFile = \"tokens.txt\";\n\n";
+
+	ss << "\tFILE* file = fopen(inputFile, \"r\");\n";
 	ss << "\tif (!file) {\n";
-	ss << "\t\tperror(\"Erro ao abrir tests/test_input.txt\");\n";
+	ss << "\t\tfprintf(stderr, \"Erro ao abrir arquivo: %s\\n\", inputFile);\n";
+	ss << "\t\treturn 1;\n";
+	ss << "\t}\n\n";
+
+	ss << "\tFILE* tokensFile = fopen(outputFile, \"w\");\n";
+	ss << "\tif (!tokensFile) {\n";
+	ss << "\t\tfprintf(stderr, \"Erro ao criar arquivo: %s\\n\", outputFile);\n";
+	ss << "\t\tfclose(file);\n";
 	ss << "\t\treturn 1;\n";
 	ss << "\t}\n\n";
 
@@ -511,6 +522,9 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\t\tstruct Token token = scanToken(processedInput, &pos);\n\n";
 
 	ss << "\t\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\t\t// Escrever no arquivo tokens.txt\n";
+	ss << "\t\t\t\tfprintf(tokensFile, \"%d %s\\n\", token.type, token.value);\n";
+	ss << "\t\t\t\t// Também imprimir na tela\n";
 	ss << "\t\t\t\tprintf(\"  -> %s ('\", tokenNames[token.type]);\n";
 	ss << "\t\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
 	ss << "\t\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
@@ -529,7 +543,9 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t}\n\n";
 
 	ss << "\tfclose(file);\n";
+	ss << "\tfclose(tokensFile);\n";
 	ss << "\tprintf(\"\\n\");\n";
+	ss << "\tprintf(\"Tokens salvos em: %s\\n\", outputFile);\n";
 	ss << "\treturn 0;\n";
 	ss << "}\n";
 

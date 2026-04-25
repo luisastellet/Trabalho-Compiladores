@@ -1,0 +1,19 @@
+TOKEN_LPAREN: (
+TOKEN_RPAREN: )
+TOKEN_LBRACKET: [
+TOKEN_RBRACKET: ]
+TOKEN_DOT: .
+TOKEN_QUOTE: q u o t e
+TOKEN_IF: i f
+TOKEN_BEGIN: b e g i n
+TOKEN_PLAIN_APP: # % p l a i n - a p p
+TOKEN_LAMBDA: # % p l a i n - l a m b d a
+TOKEN_LET_VALUES: l e t - v a l u e s
+TOKEN_LETREC_VALUES: l e t r e c - v a l u e s
+TOKEN_SET: s e t !
+TOKEN_CASE_LAMBDA: c a s e - l a m b d a
+TOKEN_BOOLEAN_TRUE: # t
+TOKEN_BOOLEAN_FALSE: # f
+TOKEN_NUMBER: - ? [0-9] + ( . [0-9] + ) ?
+TOKEN_STRING: " ( [a-zA-Z0-9 ] | \\ " ) * "
+TOKEN_IDENTIFIER: [a-zA-Z+\-*/<>=!?_] [a-zA-Z0-9+\-*/<>=!?_] *

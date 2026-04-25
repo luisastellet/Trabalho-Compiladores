@@ -1416,7 +1416,7 @@ struct Token scanToken(const char* input, int* pos) {
 	return token;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 	const char* tokenNames[] = {
 		"TOKEN_IF",
 		"TOKEN_ELSE",
@@ -1434,9 +1434,20 @@ int main() {
 		"TOKEN_EQUAL"
 	};
 
-	FILE* file = fopen("tests/test_input.txt", "r");
+	// Verificar argumentos
+	const char* inputFile = (argc > 1) ? argv[1] : "tests/test_input.txt";
+	const char* outputFile = "tokens.txt";
+
+	FILE* file = fopen(inputFile, "r");
 	if (!file) {
-		perror("Erro ao abrir tests/test_input.txt");
+		fprintf(stderr, "Erro ao abrir arquivo: %s\n", inputFile);
+		return 1;
+	}
+
+	FILE* tokensFile = fopen(outputFile, "w");
+	if (!tokensFile) {
+		fprintf(stderr, "Erro ao criar arquivo: %s\n", outputFile);
+		fclose(file);
 		return 1;
 	}
 
@@ -1522,6 +1533,9 @@ int main() {
 			struct Token token = scanToken(processedInput, &pos);
 
 			if (token.type >= 0) {
+				// Escrever no arquivo tokens.txt
+				fprintf(tokensFile, "%d %s\n", token.type, token.value);
+				// Também imprimir na tela
 				printf("  -> %s ('", tokenNames[token.type]);
 				for (int i = 0; token.value[i] != '\0'; i++) {
 					if (token.value[i] >= 32 && token.value[i] < 127) {
@@ -1540,6 +1554,8 @@ int main() {
 	}
 
 	fclose(file);
+	fclose(tokensFile);
 	printf("\n");
+	printf("Tokens salvos em: %s\n", outputFile);
 	return 0;
 }
