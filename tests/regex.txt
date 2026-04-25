@@ -1,7 +1,7 @@
 TOKEN_IF: i f .
 TOKEN_ELSE: e l . s . e .
 TOKEN_INT: [1-9] [0-9] * .
-TOKEN_STRING: " [a-z0-9_\040] * . " .
+TOKEN_STRING: " [a-z] * . " .
 TOKEN_ID: [a-z] [a-z] * .
 TOKEN_LPAREN: (
 TOKEN_RPAREN: )
