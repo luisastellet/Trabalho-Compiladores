@@ -10,8 +10,9 @@
 
 namespace racket {
 
-// Forward declaration
+// Forward declarations
 class ScannerAdapter;
+class FirstFollowCalculator;
 
 // ============================================================================
 // Token Types
@@ -112,8 +113,14 @@ public:
     /**
      * @brief Construct a parser with a scanner adapter
      * @param scanner The scanner adapter to get tokens from
+     * @param useFirstFollow Enable FIRST/FOLLOW based parsing (default: true)
      */
-    explicit RacketParser(ScannerAdapter& scanner);
+    explicit RacketParser(ScannerAdapter& scanner, bool useFirstFollow = true);
+    
+    /**
+     * @brief Destructor
+     */
+    ~RacketParser();
     
     /**
      * @brief Parse the entire input and return the AST root
@@ -129,9 +136,16 @@ public:
      */
     std::vector<std::unique_ptr<ExprNode>> parseMultiple();
     
+    /**
+     * @brief Get the FIRST/FOLLOW calculator (for inspection)
+     */
+    const FirstFollowCalculator* getFirstFollowCalculator() const;
+    
 private:
     ScannerAdapter& scanner;
     Token currentToken;
+    FirstFollowCalculator* firstFollowCalc;
+    bool useFirstFollowSets;
     
     // Token management
     
@@ -230,6 +244,27 @@ private:
      * @brief Synchronize parser after error (for error recovery)
      */
     void synchronize();
+    
+    // FIRST/FOLLOW based parsing helpers
+    
+    /**
+     * @brief Check if current token is in FIRST set of a non-terminal
+     * @param nonTerminal The non-terminal to check
+     * @return true if current token is in FIRST(nonTerminal)
+     */
+    bool inFirst(const std::string& nonTerminal) const;
+    
+    /**
+     * @brief Check if current token is in FOLLOW set of a non-terminal
+     * @param nonTerminal The non-terminal to check
+     * @return true if current token is in FOLLOW(nonTerminal)
+     */
+    bool inFollow(const std::string& nonTerminal) const;
+    
+    /**
+     * @brief Convert TokenType to string for FIRST/FOLLOW lookup
+     */
+    std::string tokenTypeToString(TokenType type) const;
 };
 
 } // namespace racket

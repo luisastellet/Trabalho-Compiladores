@@ -1,6 +1,7 @@
 #include "../racket/scannerAdapter.hpp"
 #include "../racket/racketParser.hpp"
 #include "../racket/racketAST.hpp"
+#include "../racket/firstFollow.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -111,6 +112,28 @@ void runREPL() {
 }
 
 /**
+ * @brief Show FIRST and FOLLOW sets
+ */
+void showFirstFollow() {
+    std::cout << "=== FIRST AND FOLLOW ANALYSIS ===" << std::endl;
+    std::cout << "Calculating FIRST and FOLLOW sets algorithmically..." << std::endl;
+    std::cout << std::endl;
+    
+    FirstFollowCalculator calculator;
+    
+    // Calculate FIRST sets
+    calculator.calculateFirst();
+    calculator.printFirst();
+    
+    // Calculate FOLLOW sets
+    calculator.calculateFollow();
+    calculator.printFollow();
+    
+    // Verify LL(1)
+    calculator.isLL1();
+}
+
+/**
  * @brief Print usage information
  */
 void printUsage(const char* programName) {
@@ -121,12 +144,13 @@ void printUsage(const char* programName) {
     std::cout << "  -l, --lex        Run lexer test only" << std::endl;
     std::cout << "  -p, --parse      Run parser test (default)" << std::endl;
     std::cout << "  -m, --multiple   Parse multiple expressions from file" << std::endl;
-    std::cout << "  -i, --interactive Run interactive REPL" << std::endl;
+    std::cout << "  -f, --first-follow  Show FIRST and FOLLOW sets" << std::endl;
     std::cout << std::endl;
     std::cout << "Examples:" << std::endl;
     std::cout << "  " << programName << " tokens.txt" << std::endl;
     std::cout << "  " << programName << " -l tokens.txt" << std::endl;
     std::cout << "  " << programName << " -m tokens.txt" << std::endl;
+    std::cout << "  " << programName << " -f" << std::endl;
 }
 
 /**
@@ -137,6 +161,7 @@ int main(int argc, char* argv[]) {
     bool lexOnly = false;
     bool parseMultiple = false;
     bool interactive = false;
+    bool showFirstFollowSets = false;
     std::string filename;
     
     for (int i = 1; i < argc; ++i) {
@@ -151,6 +176,8 @@ int main(int argc, char* argv[]) {
             // Single parse mode (default behavior)
         } else if (arg == "-m" || arg == "--multiple") {
             parseMultiple = true;
+        } else if (arg == "-f" || arg == "--first-follow") {
+            showFirstFollowSets = true;
         } else if (arg == "-i" || arg == "--interactive") {
             interactive = true;
         } else if (arg[0] != '-') {
@@ -160,6 +187,12 @@ int main(int argc, char* argv[]) {
             printUsage(argv[0]);
             return 1;
         }
+    }
+    
+    // Show FIRST/FOLLOW sets
+    if (showFirstFollowSets) {
+        showFirstFollow();
+        return 0;
     }
     
     // Interactive mode

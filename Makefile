@@ -7,7 +7,7 @@ RACKET_TARGET = racket_parser
 
 # Source files
 AUTOMATON_SRC = main/automaton.cpp syntax/syntaxTree.cpp automata/dfa.cpp automata/nfa.cpp
-RACKET_SRC = main/racketMain.cpp racket/racketAST.cpp racket/racketParser.cpp racket/scannerAdapter.cpp
+RACKET_SRC = main/racketMain.cpp racket/racketAST.cpp racket/racketParser.cpp racket/scannerAdapter.cpp racket/firstFollow.cpp
 
 # Default target: build both
 all: $(AUTOMATON_TARGET) $(RACKET_TARGET)
