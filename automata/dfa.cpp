@@ -304,6 +304,12 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\tchar value[256]; // Valor do token\n";
 	ss << "};\n\n";
 
+	// Função helper: verificar se um caractere é separador
+	ss << "int isSeparator(char c) {\n";
+	ss << "\treturn c == '(' || c == ')' || c == '{' || c == '}' ||\n";
+	ss << "\t       c == ';' || c == ',' || c == '=';\n";
+	ss << "}\n\n";
+
 	// Função helper para match de símbolos (incluindo multi-char)
 	ss << "// Função helper para comparar símbolo no input\n";
 	ss << "int matchSymbol(const char* input, int pos, const char* symbol) {\n";
@@ -312,18 +318,44 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\treturn 0;\n";
 	ss << "}\n\n";
 
-	// Função scanner principal
-	ss << "struct Token scanToken(const char* input, int* pos) {\n";
+	// Função para extrair próximo lexema (palavra completa, separada por separadores)
+	ss << "// Extrai o próximo lexema (sequência completa de caracteres não-separadores)\n";
+	ss << "// Se começar com aspas, extrai até a aspas de fechamento\n";
+	ss << "int extractLexeme(const char* input, int pos, char* lexeme) {\n";
+	ss << "\tint len = 0;\n";
+	ss << "\t// Se começar com aspas, extrair string entre aspas\n";
+	ss << "\tif (input[pos] == '\\\"') {\n";
+	ss << "\t\tif (len < 255) lexeme[len++] = input[pos++];\n";
+	ss << "\t\twhile (input[pos] != '\\0' && input[pos] != '\\\"') {\n";
+	ss << "\t\t\tif (len < 255) lexeme[len++] = input[pos++];\n";
+	ss << "\t\t}\n";
+	ss << "\t\tif (input[pos] == '\\\"') {\n";
+	ss << "\t\t\tif (len < 255) lexeme[len++] = input[pos++];\n";
+	ss << "\t\t}\n";
+	ss << "\t} else {\n";
+	ss << "\t\t// Caso normal: extrair até separador ou espaço\n";
+	ss << "\t\twhile (input[pos] != '\\0' && !isspace(input[pos]) && !isSeparator(input[pos])) {\n";
+	ss << "\t\t\tif (len < 255) lexeme[len++] = input[pos++];\n";
+	ss << "\t\t}\n";
+	ss << "\t}\n";
+	ss << "\tlexeme[len] = '\\0';\n";
+	ss << "\treturn len;\n";
+	ss << "}\n\n";
+
+	// Função scanner que valida um lexema completo contra o DFA
+	ss << "struct Token validateLexeme(const char* lexeme) {\n";
 	ss << "\tstruct Token token;\n";
 	ss << "\ttoken.type = -1;\n";
-	ss << "\tmemset(token.value, 0, sizeof(token.value));\n\n";
+	ss << "\tmemset(token.value, 0, sizeof(token.value));\n";
+	ss << "\tstrcpy(token.value, lexeme);\n\n";
 
 	ss << "\tint currentState = " << this->start << ";\n";
 	ss << "\tint lastFinalState = -1;\n";
-	ss << "\tint lastFinalPos = *pos;\n";
-	ss << "\tint tokenStart = *pos;\n\n";
+	ss << "\tint lastFinalPos = 0;\n";
+	ss << "\tint pos = 0;\n\n";
 
-	ss << "\twhile (input[*pos] != '\\0') {\n";
+	ss << "\t// Tentar avançar através do DFA com o lexema completo\n";
+	ss << "\twhile (lexeme[pos] != '\\0') {\n";
 	ss << "\t\tint nextState = -1;\n";
 	ss << "\t\tint symbolLen = 0;\n\n";
 
@@ -357,7 +389,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 
 			if (sym.length() == 1 && sym[0] != '\\' && sym[0] != '\'' && sym[0] != '\"') {
 				// Caractere simples
-				ss << "if (input[*pos] == '" << sym[0] << "') {\n";
+				ss << "if (lexeme[pos] == '" << sym[0] << "') {\n";
 				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
 				ss << "\t\t\t\t\tsymbolLen = 1;\n";
 				ss << "\t\t\t\t}\n";
@@ -368,7 +400,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 					if(c == '\"' || c == '\\') escapedSym += '\\';
 					escapedSym += c;
 				}
-				ss << "if ((symbolLen = matchSymbol(input, *pos, \"" << escapedSym << "\"))) {\n";
+				ss << "if ((symbolLen = matchSymbol(lexeme, pos, \"" << escapedSym << "\"))) {\n";
 				ss << "\t\t\t\t\tnextState = " << nextSt << ";\n";
 				ss << "\t\t\t\t}\n";
 			}
@@ -386,13 +418,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\tif (nextState == -1) break;\n\n";
 
 	ss << "\t\tcurrentState = nextState;\n";
-	ss << "\t\t// Adicionar símbolo ao valor do token\n";
-	ss << "\t\tfor (int i = 0; i < symbolLen; i++) {\n";
-	ss << "\t\t\tif (*pos - tokenStart + i < 255) {\n";
-	ss << "\t\t\t\ttoken.value[*pos - tokenStart + i] = input[*pos + i];\n";
-	ss << "\t\t\t}\n";
-	ss << "\t\t}\n";
-	ss << "\t\t*pos += symbolLen;\n\n";
+	ss << "\t\tpos += symbolLen;\n\n";
 
 	ss << "\t\t// Verificar se é estado final (longest match)\n";
 	ss << "\t\tswitch (currentState) {\n";
@@ -403,7 +429,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 			if (this->stateToToken.count(state)) {
 				ss << "\t\t\t\tlastFinalState = " << this->stateToToken.at(state) << ";\n";
 			}
-			ss << "\t\t\t\tlastFinalPos = *pos;\n";
+			ss << "\t\t\t\tlastFinalPos = pos;\n";
 			ss << "\t\t\t\tbreak;\n";
 		}
 	}
@@ -414,10 +440,11 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t}\n\n";
 
 	ss << "\t// Retornar ao último estado final (longest match)\n";
-	ss << "\tif (lastFinalState != -1) {\n";
+	ss << "\t// MAS APENAS SE CONSUMIU TODO O LEXEMA\n";
+	ss << "\tif (lastFinalState != -1 && lastFinalPos == strlen(lexeme)) {\n";
 	ss << "\t\ttoken.type = lastFinalState;\n";
-	ss << "\t\t*pos = lastFinalPos;\n";
-	ss << "\t\ttoken.value[lastFinalPos - tokenStart] = '\\0';\n";
+	ss << "\t} else {\n";
+	ss << "\t\ttoken.type = -1;  // Lexema não corresponde a nenhum token\n";
 	ss << "\t}\n\n";
 
 	ss << "\treturn token;\n";
@@ -465,64 +492,42 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\t// Ignorar linhas vazias\n";
 	ss << "\t\tif (strlen(line) == 0) continue;\n\n";
 
-	ss << "\t\t// Remover aspas de contorno se existirem\n";
-	ss << "\t\tchar* input = line;\n";
-	ss << "\t\tchar inputDisplay[512];\n";
-	ss << "\t\tstrcpy(inputDisplay, line);\n\n";
-
-	ss << "\t\tif (line[0] == '\\\"' && line[strlen(line)-1] == '\\\"') {\n";
-	ss << "\t\t\tinput = &line[1];\n";
-	ss << "\t\t\tline[strlen(line)-1] = '\\0';\n";
-	ss << "\t\t}\n\n";
-
-	ss << "\t\t// Processar sequências de escape\n";
-	ss << "\t\tchar processedInput[512];\n";
-	ss << "\t\tint processedLen = 0;\n";
-	ss << "\t\tfor (int j = 0; input[j] && processedLen < 511; j++) {\n";
-	ss << "\t\t\tif (input[j] == '\\\\' && input[j+1]) {\n";
-	ss << "\t\t\t\tif (input[j+1] == 'b') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\b';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else if (input[j+1] == 'n') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\n';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else if (input[j+1] == 't') {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = '\\t';\n";
-	ss << "\t\t\t\t\tj++;\n";
-	ss << "\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
-	ss << "\t\t\t\t}\n";
-	ss << "\t\t\t} else {\n";
-	ss << "\t\t\t\tprocessedInput[processedLen++] = input[j];\n";
-	ss << "\t\t\t}\n";
-	ss << "\t\t}\n";
-	ss << "\t\tprocessedInput[processedLen] = '\\0';\n\n";
-
-	ss << "\t\tprintf(\"Entrada: %s\\n\", inputDisplay);\n\n";
+	ss << "\t\tprintf(\"Entrada: %s\\n\", line);\n\n";
 
 	ss << "\t\tint pos = 0;\n";
-	ss << "\t\twhile (processedInput[pos] != '\\0') {\n";
-	ss << "\t\t\t// Ignorar espaços em branco entre tokens\n";
-	ss << "\t\t\twhile (processedInput[pos] != '\\0' && isspace(processedInput[pos])) {\n";
+	ss << "\t\twhile (line[pos] != '\\0') {\n";
+	ss << "\t\t\t// Ignorar espaços em branco\n";
+	ss << "\t\t\twhile (line[pos] != '\\0' && isspace(line[pos])) {\n";
 	ss << "\t\t\t\tpos++;\n";
 	ss << "\t\t\t}\n";
-	ss << "\t\t\tif (processedInput[pos] == '\\0') break;\n\n";
+	ss << "\t\t\tif (line[pos] == '\\0') break;\n\n";
 
-	ss << "\t\t\tstruct Token token = scanToken(processedInput, &pos);\n\n";
-
-	ss << "\t\t\tif (token.type >= 0) {\n";
-	ss << "\t\t\t\tprintf(\"  -> %s ('\", tokenNames[token.type]);\n";
-	ss << "\t\t\t\tfor (int i = 0; token.value[i] != '\\0'; i++) {\n";
-	ss << "\t\t\t\t\tif (token.value[i] >= 32 && token.value[i] < 127) {\n";
-	ss << "\t\t\t\t\t\tprintf(\"%c\", token.value[i]);\n";
-	ss << "\t\t\t\t\t} else {\n";
-	ss << "\t\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)token.value[i]);\n";
-	ss << "\t\t\t\t\t}\n";
+	ss << "\t\t\t// Fase 1: Separadores são tratados imediatamente\n";
+	ss << "\t\t\tif (isSeparator(line[pos])) {\n";
+	ss << "\t\t\t\tchar sep[2] = {line[pos], '\\0'};\n";
+	ss << "\t\t\t\tstruct Token token = validateLexeme(sep);\n";
+	ss << "\t\t\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\t\t\tprintf(\"  -> %s ('%c')\\n\", tokenNames[token.type], line[pos]);\n";
+	ss << "\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\tprintf(\"  -> Não reconhecido: '%c'\\n\", line[pos]);\n";
 	ss << "\t\t\t\t}\n";
-	ss << "\t\t\t\tprintf(\"')\\n\");\n";
+	ss << "\t\t\t\tpos++;\n";
 	ss << "\t\t\t} else {\n";
-	ss << "\t\t\t\tprintf(\"  -> Não reconhecido: '%c'\\n\", processedInput[pos]);\n";
-	ss << "\t\t\t\tpos++; // Avança um caractere para tentar continuar\n";
+	ss << "\t\t\t\t// Fase 2: Extrair lexema completo (sequência de caracteres não-separadores)\n";
+	ss << "\t\t\t\tchar lexeme[256];\n";
+	ss << "\t\t\t\tint lexemeLen = extractLexeme(line, pos, lexeme);\n";
+	ss << "\t\t\t\tif (lexemeLen > 0) {\n";
+	ss << "\t\t\t\t\t// Validar o lexema completo contra todos os tokens\n";
+	ss << "\t\t\t\t\tstruct Token token = validateLexeme(lexeme);\n";
+	ss << "\t\t\t\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\t\t\t\tprintf(\"  -> %s ('%s')\\n\", tokenNames[token.type], token.value);\n";
+	ss << "\t\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\t\tprintf(\"  -> Erro: '%s' não corresponde a nenhum token\\n\", lexeme);\n";
+	ss << "\t\t\t\t\t}\n";
+	ss << "\t\t\t\t\tpos += lexemeLen;\n";
+	ss << "\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\tpos++; // Avança se não conseguiu extrair\n";
+	ss << "\t\t\t\t}\n";
 	ss << "\t\t\t}\n";
 	ss << "\t\t}\n";
 	ss << "\t\tprintf(\"\\n\");\n";

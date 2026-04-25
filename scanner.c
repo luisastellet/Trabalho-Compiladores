@@ -7,6 +7,11 @@ struct Token {
 	char value[256]; // Valor do token
 };
 
+int isSeparator(char c) {
+	return c == '(' || c == ')' || c == '{' || c == '}' ||
+	       c == ';' || c == ',' || c == '=';
+}
+
 // Função helper para comparar símbolo no input
 int matchSymbol(const char* input, int pos, const char* symbol) {
 	size_t len = strlen(symbol);
@@ -14,409 +19,326 @@ int matchSymbol(const char* input, int pos, const char* symbol) {
 	return 0;
 }
 
-struct Token scanToken(const char* input, int* pos) {
+// Extrai o próximo lexema (sequência completa de caracteres não-separadores)
+// Se começar com aspas, extrai até a aspas de fechamento
+int extractLexeme(const char* input, int pos, char* lexeme) {
+	int len = 0;
+	// Se começar com aspas, extrair string entre aspas
+	if (input[pos] == '\"') {
+		if (len < 255) lexeme[len++] = input[pos++];
+		while (input[pos] != '\0' && input[pos] != '\"') {
+			if (len < 255) lexeme[len++] = input[pos++];
+		}
+		if (input[pos] == '\"') {
+			if (len < 255) lexeme[len++] = input[pos++];
+		}
+	} else {
+		// Caso normal: extrair até separador ou espaço
+		while (input[pos] != '\0' && !isspace(input[pos]) && !isSeparator(input[pos])) {
+			if (len < 255) lexeme[len++] = input[pos++];
+		}
+	}
+	lexeme[len] = '\0';
+	return len;
+}
+
+struct Token validateLexeme(const char* lexeme) {
 	struct Token token;
 	token.type = -1;
 	memset(token.value, 0, sizeof(token.value));
+	strcpy(token.value, lexeme);
 
 	int currentState = 0;
 	int lastFinalState = -1;
-	int lastFinalPos = *pos;
-	int tokenStart = *pos;
+	int lastFinalPos = 0;
+	int pos = 0;
 
-	while (input[*pos] != '\0') {
+	// Tentar avançar através do DFA com o lexema completo
+	while (lexeme[pos] != '\0') {
 		int nextState = -1;
 		int symbolLen = 0;
 
 		switch (currentState) {
 			case 0: {
-				if ((symbolLen = matchSymbol(input, *pos, "\""))) {
-					nextState = 1;
-				}
- else if (input[*pos] == '(') {
-					nextState = 2;
-					symbolLen = 1;
-				}
- else if (input[*pos] == ')') {
-					nextState = 3;
-					symbolLen = 1;
-				}
- else if (input[*pos] == ',') {
-					nextState = 4;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '0') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '1') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '2') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '3') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '4') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '5') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '6') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '7') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '8') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '9') {
-					nextState = 6;
-					symbolLen = 1;
-				}
- else if (input[*pos] == ';') {
-					nextState = 7;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '=') {
+				if (lexeme[pos] == 'r') {
 					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'A') {
-					nextState = 9;
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'B') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'C') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'D') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'E') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'F') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'G') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'H') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'I') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'J') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'K') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'L') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'M') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'N') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'O') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'P') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'Q') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'R') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'S') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'T') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'U') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'V') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'W') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'X') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'Y') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'Z') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'a') {
+ else if (lexeme[pos] == 'i') {
 					nextState = 10;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'e') {
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'n') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '{') {
 					nextState = 11;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
+ else if (lexeme[pos] == '}') {
 					nextState = 12;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
+ else if (lexeme[pos] == '8') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
+ else if (lexeme[pos] == '(') {
+					nextState = 2;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
+ else if (lexeme[pos] == ')') {
+					nextState = 3;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
+ else if (lexeme[pos] == ',') {
+					nextState = 4;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
+ else if (lexeme[pos] == '1') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
+ else if (lexeme[pos] == '2') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
+ else if (lexeme[pos] == '3') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
+ else if (lexeme[pos] == '4') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
+ else if (lexeme[pos] == '5') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 's') {
-					nextState = 10;
+ else if (lexeme[pos] == '6') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 't') {
-					nextState = 10;
+ else if (lexeme[pos] == '7') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
+ else if ((symbolLen = matchSymbol(lexeme, pos, "\""))) {
+					nextState = 1;
+				}
+ else if (lexeme[pos] == '9') {
+					nextState = 5;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
+ else if (lexeme[pos] == ';') {
+					nextState = 6;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
+ else if (lexeme[pos] == '=') {
+					nextState = 7;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '{') {
-					nextState = 13;
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '}') {
-					nextState = 14;
+ else if (lexeme[pos] == 'e') {
+					nextState = 9;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 1: {
-				if ((symbolLen = matchSymbol(input, *pos, "\""))) {
-					nextState = 15;
-				}
- else if (input[*pos] == 'a') {
+				if (lexeme[pos] == 'm') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'b') {
+ else if (lexeme[pos] == 'z') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'c') {
+ else if (lexeme[pos] == 'y') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'd') {
+ else if (lexeme[pos] == 'x') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'e') {
+ else if (lexeme[pos] == 'w') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'f') {
+ else if (lexeme[pos] == 'v') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'g') {
+ else if (lexeme[pos] == 'u') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'h') {
+ else if (lexeme[pos] == 't') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'i') {
+ else if (lexeme[pos] == 's') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'j') {
+ else if (lexeme[pos] == 'r') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'k') {
+ else if (lexeme[pos] == 'q') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'l') {
+ else if (lexeme[pos] == 'p') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'm') {
+ else if (lexeme[pos] == 'o') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'n') {
+ else if (lexeme[pos] == 'n') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'o') {
+ else if ((symbolLen = matchSymbol(lexeme, pos, "\""))) {
+					nextState = 13;
+				}
+ else if (lexeme[pos] == 'l') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'p') {
+ else if (lexeme[pos] == 'k') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'q') {
+ else if (lexeme[pos] == 'j') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'r') {
+ else if (lexeme[pos] == 'i') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 's') {
+ else if (lexeme[pos] == 'h') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 't') {
+ else if (lexeme[pos] == 'g') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'u') {
+ else if (lexeme[pos] == 'f') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'v') {
+ else if (lexeme[pos] == 'e') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'w') {
+ else if (lexeme[pos] == 'd') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'x') {
+ else if (lexeme[pos] == 'c') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'y') {
+ else if (lexeme[pos] == 'b') {
 					nextState = 1;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'z') {
+ else if (lexeme[pos] == 'a') {
 					nextState = 1;
 					symbolLen = 1;
 				}
@@ -436,50 +358,50 @@ struct Token scanToken(const char* input, int* pos) {
 			}
 
 			case 5: {
+				if (lexeme[pos] == '0') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '1') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '2') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '3') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '4') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '5') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '6') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '7') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '8') {
+					nextState = 5;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '9') {
+					nextState = 5;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 6: {
-				if (input[*pos] == '0') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '1') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '2') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '3') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '4') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '5') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '6') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '7') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '8') {
-					nextState = 16;
-					symbolLen = 1;
-				}
- else if (input[*pos] == '9') {
-					nextState = 16;
-					symbolLen = 1;
-				}
 				break;
 			}
 
@@ -488,334 +410,334 @@ struct Token scanToken(const char* input, int* pos) {
 			}
 
 			case 8: {
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 9: {
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 14;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 10: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 's') {
-					nextState = 10;
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 't') {
-					nextState = 10;
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
+ else if (lexeme[pos] == 'f') {
+					nextState = 15;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 11: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'l') {
-					nextState = 17;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 's') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 't') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
-					symbolLen = 1;
-				}
 				break;
 			}
 
 			case 12: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'f') {
-					nextState = 18;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 's') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 't') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
-					symbolLen = 1;
-				}
 				break;
 			}
 
@@ -824,484 +746,432 @@ struct Token scanToken(const char* input, int* pos) {
 			}
 
 			case 14: {
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 16;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 15: {
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 16: {
-				if (input[*pos] == '0') {
-					nextState = 16;
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '1') {
-					nextState = 16;
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '2') {
-					nextState = 16;
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '3') {
-					nextState = 16;
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '4') {
-					nextState = 16;
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '5') {
-					nextState = 16;
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '6') {
-					nextState = 16;
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '7') {
-					nextState = 16;
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '8') {
-					nextState = 16;
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == '9') {
-					nextState = 16;
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 17;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
 					symbolLen = 1;
 				}
 				break;
 			}
 
 			case 17: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
+				if (lexeme[pos] == 'n') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
+ else if (lexeme[pos] == 'z') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
+ else if (lexeme[pos] == 'y') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
+ else if (lexeme[pos] == 'x') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
+ else if (lexeme[pos] == 'w') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
+ else if (lexeme[pos] == 'v') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
+ else if (lexeme[pos] == 'u') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
+ else if (lexeme[pos] == 't') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
+ else if (lexeme[pos] == 's') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
+ else if (lexeme[pos] == 'r') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
+ else if (lexeme[pos] == 'q') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
+ else if (lexeme[pos] == 'p') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
+ else if (lexeme[pos] == 'o') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
+ else if (lexeme[pos] == 'a') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
+ else if (lexeme[pos] == 'm') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
+ else if (lexeme[pos] == 'l') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
+ else if (lexeme[pos] == 'k') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
+ else if (lexeme[pos] == 'j') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 's') {
-					nextState = 19;
+ else if (lexeme[pos] == 'i') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 't') {
-					nextState = 10;
+ else if (lexeme[pos] == 'h') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
+ else if (lexeme[pos] == 'g') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
+ else if (lexeme[pos] == 'f') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
+ else if (lexeme[pos] == 'e') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
+ else if (lexeme[pos] == 'd') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
+ else if (lexeme[pos] == 'c') {
+					nextState = 8;
 					symbolLen = 1;
 				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
-					symbolLen = 1;
-				}
-				break;
-			}
-
-			case 18: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 's') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 't') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
-					symbolLen = 1;
-				}
-				break;
-			}
-
-			case 19: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'e') {
-					nextState = 20;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 's') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 't') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
-					symbolLen = 1;
-				}
-				break;
-			}
-
-			case 20: {
-				if (input[*pos] == 'a') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'b') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'c') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'd') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'e') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'f') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'g') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'h') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'i') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'j') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'k') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'l') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'm') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'n') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'o') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'p') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'q') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'r') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 's') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 't') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'u') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'v') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'w') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'x') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'y') {
-					nextState = 10;
-					symbolLen = 1;
-				}
- else if (input[*pos] == 'z') {
-					nextState = 10;
+ else if (lexeme[pos] == 'b') {
+					nextState = 8;
 					symbolLen = 1;
 				}
 				break;
@@ -1315,91 +1185,73 @@ struct Token scanToken(const char* input, int* pos) {
 		if (nextState == -1) break;
 
 		currentState = nextState;
-		// Adicionar símbolo ao valor do token
-		for (int i = 0; i < symbolLen; i++) {
-			if (*pos - tokenStart + i < 255) {
-				token.value[*pos - tokenStart + i] = input[*pos + i];
-			}
-		}
-		*pos += symbolLen;
+		pos += symbolLen;
 
 		// Verificar se é estado final (longest match)
 		switch (currentState) {
 			case 2:
-				lastFinalState = 7;
-				lastFinalPos = *pos;
+				lastFinalState = 5;
+				lastFinalPos = pos;
 				break;
 			case 3:
-				lastFinalState = 8;
-				lastFinalPos = *pos;
+				lastFinalState = 6;
+				lastFinalPos = pos;
 				break;
 			case 4:
-				lastFinalState = 12;
-				lastFinalPos = *pos;
+				lastFinalState = 10;
+				lastFinalPos = pos;
 				break;
 			case 5:
-				lastFinalState = 6;
-				lastFinalPos = *pos;
+				lastFinalState = 2;
+				lastFinalPos = pos;
 				break;
 			case 6:
-				lastFinalState = 2;
-				lastFinalPos = *pos;
+				lastFinalState = 9;
+				lastFinalPos = pos;
 				break;
 			case 7:
 				lastFinalState = 11;
-				lastFinalPos = *pos;
+				lastFinalPos = pos;
 				break;
 			case 8:
-				lastFinalState = 13;
-				lastFinalPos = *pos;
+				lastFinalState = 4;
+				lastFinalPos = pos;
 				break;
 			case 9:
-				lastFinalState = 5;
-				lastFinalPos = *pos;
+				lastFinalState = 4;
+				lastFinalPos = pos;
 				break;
 			case 10:
 				lastFinalState = 4;
-				lastFinalPos = *pos;
+				lastFinalPos = pos;
 				break;
 			case 11:
-				lastFinalState = 4;
-				lastFinalPos = *pos;
+				lastFinalState = 7;
+				lastFinalPos = pos;
 				break;
 			case 12:
-				lastFinalState = 4;
-				lastFinalPos = *pos;
+				lastFinalState = 8;
+				lastFinalPos = pos;
 				break;
 			case 13:
-				lastFinalState = 9;
-				lastFinalPos = *pos;
+				lastFinalState = 3;
+				lastFinalPos = pos;
 				break;
 			case 14:
-				lastFinalState = 10;
-				lastFinalPos = *pos;
+				lastFinalState = 4;
+				lastFinalPos = pos;
 				break;
 			case 15:
-				lastFinalState = 3;
-				lastFinalPos = *pos;
+				lastFinalState = 0;
+				lastFinalPos = pos;
 				break;
 			case 16:
-				lastFinalState = 2;
-				lastFinalPos = *pos;
+				lastFinalState = 4;
+				lastFinalPos = pos;
 				break;
 			case 17:
-				lastFinalState = 4;
-				lastFinalPos = *pos;
-				break;
-			case 18:
-				lastFinalState = 0;
-				lastFinalPos = *pos;
-				break;
-			case 19:
-				lastFinalState = 4;
-				lastFinalPos = *pos;
-				break;
-			case 20:
 				lastFinalState = 1;
-				lastFinalPos = *pos;
+				lastFinalPos = pos;
 				break;
 			default:
 				break;
@@ -1407,10 +1259,11 @@ struct Token scanToken(const char* input, int* pos) {
 	}
 
 	// Retornar ao último estado final (longest match)
-	if (lastFinalState != -1) {
+	// MAS APENAS SE CONSUMIU TODO O LEXEMA
+	if (lastFinalState != -1 && lastFinalPos == strlen(lexeme)) {
 		token.type = lastFinalState;
-		*pos = lastFinalPos;
-		token.value[lastFinalPos - tokenStart] = '\0';
+	} else {
+		token.type = -1;  // Lexema não corresponde a nenhum token
 	}
 
 	return token;
@@ -1423,8 +1276,6 @@ int main() {
 		"TOKEN_INT",
 		"TOKEN_STRING",
 		"TOKEN_ID",
-		"TOKEN_LETTER",
-		"TOKEN_DIGIT",
 		"TOKEN_LPAREN",
 		"TOKEN_RPAREN",
 		"TOKEN_LBRACE",
@@ -1456,8 +1307,6 @@ int main() {
 	printf("  Token %zu: %s\n", (size_t)9, tokenNames[9]);
 	printf("  Token %zu: %s\n", (size_t)10, tokenNames[10]);
 	printf("  Token %zu: %s\n", (size_t)11, tokenNames[11]);
-	printf("  Token %zu: %s\n", (size_t)12, tokenNames[12]);
-	printf("  Token %zu: %s\n", (size_t)13, tokenNames[13]);
 
 	printf("Testes:\n");
 	printf("─────────────────────────────────────\n");
@@ -1476,64 +1325,42 @@ int main() {
 		// Ignorar linhas vazias
 		if (strlen(line) == 0) continue;
 
-		// Remover aspas de contorno se existirem
-		char* input = line;
-		char inputDisplay[512];
-		strcpy(inputDisplay, line);
-
-		if (line[0] == '\"' && line[strlen(line)-1] == '\"') {
-			input = &line[1];
-			line[strlen(line)-1] = '\0';
-		}
-
-		// Processar sequências de escape
-		char processedInput[512];
-		int processedLen = 0;
-		for (int j = 0; input[j] && processedLen < 511; j++) {
-			if (input[j] == '\\' && input[j+1]) {
-				if (input[j+1] == 'b') {
-					processedInput[processedLen++] = '\b';
-					j++;
-				} else if (input[j+1] == 'n') {
-					processedInput[processedLen++] = '\n';
-					j++;
-				} else if (input[j+1] == 't') {
-					processedInput[processedLen++] = '\t';
-					j++;
-				} else {
-					processedInput[processedLen++] = input[j];
-				}
-			} else {
-				processedInput[processedLen++] = input[j];
-			}
-		}
-		processedInput[processedLen] = '\0';
-
-		printf("Entrada: %s\n", inputDisplay);
+		printf("Entrada: %s\n", line);
 
 		int pos = 0;
-		while (processedInput[pos] != '\0') {
-			// Ignorar espaços em branco entre tokens
-			while (processedInput[pos] != '\0' && isspace(processedInput[pos])) {
+		while (line[pos] != '\0') {
+			// Ignorar espaços em branco
+			while (line[pos] != '\0' && isspace(line[pos])) {
 				pos++;
 			}
-			if (processedInput[pos] == '\0') break;
+			if (line[pos] == '\0') break;
 
-			struct Token token = scanToken(processedInput, &pos);
-
-			if (token.type >= 0) {
-				printf("  -> %s ('", tokenNames[token.type]);
-				for (int i = 0; token.value[i] != '\0'; i++) {
-					if (token.value[i] >= 32 && token.value[i] < 127) {
-						printf("%c", token.value[i]);
-					} else {
-						printf("[%d]", (int)(unsigned char)token.value[i]);
-					}
+			// Fase 1: Separadores são tratados imediatamente
+			if (isSeparator(line[pos])) {
+				char sep[2] = {line[pos], '\0'};
+				struct Token token = validateLexeme(sep);
+				if (token.type >= 0) {
+					printf("  -> %s ('%c')\n", tokenNames[token.type], line[pos]);
+				} else {
+					printf("  -> Não reconhecido: '%c'\n", line[pos]);
 				}
-				printf("')\n");
+				pos++;
 			} else {
-				printf("  -> Não reconhecido: '%c'\n", processedInput[pos]);
-				pos++; // Avança um caractere para tentar continuar
+				// Fase 2: Extrair lexema completo (sequência de caracteres não-separadores)
+				char lexeme[256];
+				int lexemeLen = extractLexeme(line, pos, lexeme);
+				if (lexemeLen > 0) {
+					// Validar o lexema completo contra todos os tokens
+					struct Token token = validateLexeme(lexeme);
+					if (token.type >= 0) {
+						printf("  -> %s ('%s')\n", tokenNames[token.type], token.value);
+					} else {
+						printf("  -> Erro: '%s' não corresponde a nenhum token\n", lexeme);
+					}
+					pos += lexemeLen;
+				} else {
+					pos++; // Avança se não conseguiu extrair
+				}
 			}
 		}
 		printf("\n");
