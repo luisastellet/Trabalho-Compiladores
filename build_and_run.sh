@@ -31,7 +31,7 @@ fi
 echo -e "${GREEN}✓ Gerador compilado${NC}\n"
 
 echo -e "${YELLOW}[3/6] Gerando Scanner (scanner.c)...${NC}"
-./main/automaton tests/regex.txt
+./main/automaton tests/racket_regex.txt
 
 if [ ! -f "$BUILD_DIR/scanner.c" ]; then
     echo -e "${RED}✗ Erro: scanner.c não foi gerado${NC}"
@@ -75,9 +75,14 @@ echo -e "${BLUE}Conteúdo de tokens.txt:${NC}"
 cat tokens.txt
 echo ""
 
-echo -e "${YELLOW}Teste 2: Parser Racket lendo tokens.txt${NC}"
-echo -e "${BLUE}Executando: ./main/racket_parser -l tokens.txt${NC}"
-./main/racket_parser -l tokens.txt
+echo -e "${YELLOW}Teste 2: Parser Racket gerando AST (múltiplas expressões)${NC}"
+echo -e "${BLUE}Executando: ./main/racket_parser -m tokens.txt${NC}"
+./main/racket_parser -m tokens.txt
+echo ""
+
+echo -e "${YELLOW}Teste 3: Mostrar FIRST e FOLLOW sets${NC}"
+echo -e "${BLUE}Executando: ./main/racket_parser -f${NC}"
+./main/racket_parser -f
 echo ""
 
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
@@ -94,8 +99,9 @@ echo -e "  ${YELLOW}make all${NC}                     - Compila gerador E parser
 echo -e "  ${YELLOW}make automaton${NC}               - Compila apenas o gerador"
 echo -e "  ${YELLOW}make racket${NC}                  - Compila apenas o parser"
 echo -e "  ${YELLOW}./scanner <input>${NC}            - Gera tokens.txt do input"
-echo -e "  ${YELLOW}./main/racket_parser tokens.txt${NC} - Parser lê tokens.txt"
+echo -e "  ${YELLOW}./main/racket_parser tokens.txt${NC} - Parser gera AST"
 echo -e "  ${YELLOW}./main/racket_parser -l tokens.txt${NC} - Mostra tokens lidos"
+echo -e "  ${YELLOW}./main/racket_parser -f${NC}      - Mostra FIRST/FOLLOW sets"
 echo ""
 
 # Made with Bob

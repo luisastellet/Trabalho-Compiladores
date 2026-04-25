@@ -74,30 +74,24 @@ void ScannerAdapter::loadTokensFromFile(const std::string& filename) {
 
 Token ScannerAdapter::createTokenFromType(int type, const std::string& value, int line, int column) {
     // Map scanner token types to parser token types
-    // Based on tokens.txt format from scanner.c
+    // Based on ACTUAL scanner.c output (not racket_regex.txt order):
+    // The scanner reorders tokens, so we need to map based on what it actually generates
+    // From tokens.txt: 0=IF, 4=IDENTIFIER, 7=LPAREN, 8=RPAREN
     TokenType tokenType;
     
     switch (type) {
         case 0: tokenType = TokenType::IF; break;
-        case 1: tokenType = TokenType::IDENTIFIER; break;  // else is identifier
-        case 2: tokenType = TokenType::NUMBER; break;
-        case 3: tokenType = TokenType::STRING; break;
+        case 1: tokenType = TokenType::RIGHT_BRACKET; break;  // guess
+        case 2: tokenType = TokenType::LEFT_BRACKET; break;   // guess
+        case 3: tokenType = TokenType::RIGHT_BRACKET; break;  // guess
         case 4: tokenType = TokenType::IDENTIFIER; break;
-        case 5: tokenType = TokenType::QUOTE; break;
-        case 6: tokenType = TokenType::BEGIN; break;
+        case 5: tokenType = TokenType::BEGIN; break;
+        case 6: tokenType = TokenType::QUOTE; break;
         case 7: tokenType = TokenType::LEFT_PAREN; break;
         case 8: tokenType = TokenType::RIGHT_PAREN; break;
-        case 9: tokenType = TokenType::LEFT_BRACKET; break;
-        case 10: tokenType = TokenType::RIGHT_BRACKET; break;
-        case 11: tokenType = TokenType::DOT; break;
-        case 12: tokenType = TokenType::PLAIN_APP; break;
-        case 13: tokenType = TokenType::LAMBDA; break;
-        case 14: tokenType = TokenType::LET_VALUES; break;
-        case 15: tokenType = TokenType::LETREC_VALUES; break;
-        case 16: tokenType = TokenType::SET; break;
-        case 17: tokenType = TokenType::CASE_LAMBDA; break;
-        case 18: tokenType = TokenType::BOOLEAN; break;  // #t or #f
-        case 19: tokenType = TokenType::END_OF_FILE; break;
+        case 9: tokenType = TokenType::NUMBER; break;
+        case 10: tokenType = TokenType::STRING; break;
+        case 11: tokenType = TokenType::END_OF_FILE; break;
         default: tokenType = TokenType::IDENTIFIER; break;
     }
     
