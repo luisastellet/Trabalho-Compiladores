@@ -1,33 +1,209 @@
 # Trabalho de Compiladores
-Projeto da disciplina de Compiladores (prof. Bruno Lopes) — semestre 2026.1, UFF.
 
-Autores: Alonso Bassini, Luisa Stellet e Miguel Jehle.
+Implementação de um compilador completo com gerador de scanner, scanner léxico e parser sintático para a linguagem Racket.
 
-## Justificativa do uso da notação pós-fixada
-Usamos notação pós-fixada para facilitar a construção de árvores sintáticas e reduzir a necessidade de lookahead na análise. Em pós-fixado, cada token é processado no fluxo: operandos são empilhados; operadores consomem seus operandos da pilha e empilham o resultado. Isso evita verificações complexas de precedência e associatividade em tempo de leitura.
+Alunos: Alonso Breda Bassini, Luisa Muniz Stellet e Miguel Bárbaro Jehle
 
-## Observações de entrada
-- Expressão regular em notação pós-fixada (postfix/RPN).
-- Tokens separados por espaço em branco.
-- Operadores:
-  - `*` (fecho de Kleene)
-  - `+` (uma ou mais ocorrências)
-  - `?` (zero ou uma ocorrência)
-  - `|` (alternância)
-  - `.` (concatenação)
+## Arquitetura do Sistema
 
-## Estrutura atual do código
-- `syntaxTree.cpp` contém as classes básicas:
-  - `Node`
-  - `OperativeNodeUnary`
-  - `OperativeNodeBinary`
-  - `regularExpressionToken` (armazena expressão regular em uma árvore)
+```
+┌─────────────────┐
+│  Gerador de     │
+│  Scanner (C++)  │  ← tests/racket_regex.txt
+└────────┬────────┘
+         │ gera
+         ▼
+┌─────────────────┐
+│  scanner.c (C)  │
+└────────┬────────┘
+         │ processa
+         ▼
+┌─────────────────┐
+│  tokens.txt     │  ← tests/test_input.txt
+└────────┬────────┘
+         │ lê
+         ▼
+┌─────────────────┐
+│  Parser Racket  │
+│  (C++)          │
+└────────┬────────┘
+         │ gera
+         ▼
+┌─────────────────┐
+│  AST (Árvore    │
+│  Sintática)     │
+└─────────────────┘
+```
 
-## TODO da syntaxTree
-- Renomear as variáveis f, n, eps, nR, nL (final_state, number_of_states, alphabetSize, ... , ...)
-- Transformar o NFA numa classe
-- MUdar a struct do NFA para aceitar vários finais
-- Diferenciar as classes NFA e DFA em arquivos diferentes (usar herança)
+## Uso Rápido
 
-## Como executar o código
-Compilar e Executar : ```bash build_and_run.sh``` 
+### Build e Teste Completo
+
+**Modo Normal:**
+```bash
+./build_and_run.sh
+```
+
+**Modo Verbose (mostra autômatos e detalhes de debug):**
+```bash
+./build_and_run.sh -v
+# ou
+./build_and_run.sh --verbose
+```
+
+Este script executa todo o fluxo:
+1. Compila o gerador de scanner
+2. Gera o scanner.c
+3. Compila o scanner
+4. Gera tokens.txt
+5. Compila o parser
+6. Executa testes e mostra AST
+
+### Comandos Individuais
+
+```bash
+# Compilar tudo
+make all
+
+# Compilar apenas o gerador
+make automaton
+
+# Compilar apenas o parser
+make racket
+
+# Gerar tokens de um arquivo
+./scanner input.txt
+
+# Parsear tokens e gerar AST
+./main/racket_parser tokens.txt
+
+# Parsear múltiplas expressões
+./main/racket_parser -m tokens.txt
+
+# Mostrar tokens lidos
+./main/racket_parser -l tokens.txt
+
+# Mostrar FIRST/FOLLOW sets
+./main/racket_parser -f
+```
+
+## Estrutura do Projeto
+
+```
+.
+├── build_and_run.sh          # Script principal do fluxo completo
+├── Makefile                  # Build system
+│
+├── main/
+│   ├── automaton.cpp         # Gerador de scanner
+│   └── racketMain.cpp        # Programa principal do parser
+│
+├── automata/
+│   ├── nfa.cpp/hpp          # Autômato Finito Não-Determinístico
+│   └── dfa.cpp/hpp          # Autômato Finito Determinístico
+│
+├── syntax/
+│   └── syntaxTree.cpp/hpp   # Árvore sintática para regex
+│
+├── racket/
+│   ├── racketParser.cpp/hpp      # Parser LL(1)
+│   ├── racketAST.cpp/hpp         # Nós da AST
+│   ├── firstFollow.cpp/hpp       # Cálculo de FIRST/FOLLOW
+│   └── scannerAdapter.cpp/hpp    # Adaptador tokens.txt → parser
+│
+└── tests/
+    ├── racket_regex.txt     # Definições de tokens (regex)
+    └── test_input.txt       # Código Racket de teste
+```
+
+## Tecnologias
+
+- **Gerador de Scanner**: C++ (NFA → DFA → Minimização)
+- **Scanner**: C (gerado automaticamente)
+- **Parser**: C++ (Recursive Descent, LL(1))
+- **Formato de Tokens**: Arquivo texto intermediário
+
+## Sintaxe das Regex
+
+O gerador usa **notação posfixa**:
+
+```
+i f .                    # "if" (concatenação)
+[a-z] [a-z] * .         # identificador (letra + zero ou mais letras)
+[0-9] [0-9] * .         # número (dígito + zero ou mais dígitos)
+" [a-z] * . " .         # string ("..." com letras)
+```
+
+**Operadores:**
+- `.` = concatenação (binário)
+- `|` = alternância/ou (binário)
+- `*` = zero ou mais (unário)
+- `+` = uma ou mais (unário)
+- `?` = zero ou um (unário)
+- `[a-z]` = classe de caracteres
+
+## Características do Parser
+
+- **Tipo**: Recursive Descent (Top-Down)
+- **Gramática**: LL(1)
+- **FIRST/FOLLOW**: Calculados algoritmicamente
+- **Suporte**: Múltiplas expressões
+- **AST**: Árvore sintática abstrata completa
+
+### Nós da AST
+
+- `IfNode`: Expressões condicionais
+- `AppNode`: Aplicação de função
+- `IdNode`: Identificadores
+- `NumberNode`: Números
+- `StringNode`: Strings
+- `BooleanNode`: Booleanos
+
+## Exemplo de Uso
+
+**Entrada** (`tests/test_input.txt`):
+```racket
+(if x y z)
+(begin a b c)
+(quote foo)
+```
+
+**Saída** (AST):
+```
+Expression 1:
+  IfNode:
+    condition: IdNode: x
+    then: IdNode: y
+    else: IdNode: z
+
+Expression 2:
+  AppNode:
+    function: IdNode: begin
+    arguments: (3)
+      [0]: IdNode: a
+      [1]: IdNode: b
+      [2]: IdNode: c
+
+Expression 3:
+  AppNode:
+    function: IdNode: quote
+    arguments: (1)
+      [0]: IdNode: foo
+```
+
+## Limpeza
+
+```bash
+make clean  # Remove binários e arquivos gerados
+```
+
+## 📚 Documentação Adicional
+
+- `INTEGRATION.md` - Detalhes da integração scanner/parser
+- `racket/DESIGN.md` - Design do parser
+- `racket/ARCHITECTURE.md` - Arquitetura do sistema
+- `racket/PLAN.md` - Plano de implementação
+
+---
+
+**Desenvolvido para a disciplina de Compiladores - UFF**

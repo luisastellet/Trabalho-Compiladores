@@ -1,0 +1,10 @@
+TOKEN_LPAREN: (
+TOKEN_RPAREN: )
+TOKEN_LBRACKET: [
+TOKEN_RBRACKET: ]
+TOKEN_IF: i f .
+TOKEN_BEGIN: b e . g . i . n .
+TOKEN_QUOTE: q u . o . t . e .
+TOKEN_NUMBER: [0-9] [0-9] * .
+TOKEN_STRING: " [a-z] * . " .
+TOKEN_IDENTIFIER: [a-z] [a-z] * .

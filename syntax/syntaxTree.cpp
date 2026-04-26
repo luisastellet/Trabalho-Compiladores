@@ -132,7 +132,7 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                         pilha.push(newNode);
                     }
                 } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
-                    // Character class - extract content without brackets
+                    // Classe de caracteres - extrai o conteúdo sem os colchetes
                     string charClass = reading.substr(1, reading.size() - 2);
                     Node* newNode = new CharacterClassNode(charClass);
                     pilha.push(newNode);
@@ -162,7 +162,7 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                 pilha.push(newNode);
             }
         } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
-            // Character class - extract content without brackets
+            // Classe de caracteres - extrai o conteúdo sem os colchetes
             string charClass = reading.substr(1, reading.size() - 2);
             Node* newNode = new CharacterClassNode(charClass);
             pilha.push(newNode);
@@ -192,7 +192,7 @@ bool regularExpressionToken::IsOperatorUnary(string c) {
 vector<string> readRegexFromFile(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Error opening file: " << filename << endl;
+        cerr << "Erro ao abrir o arquivo: " << filename << endl;
         return {};
     }
     vector<string> lines;

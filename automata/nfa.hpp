@@ -8,8 +8,7 @@
 
 using namespace std;
 
-class DFA;  // Forward declaration
-
+class DFA;  
 class NFA {
     private:
         set<int> delta(const set<int>& states, int epsIdx) const;

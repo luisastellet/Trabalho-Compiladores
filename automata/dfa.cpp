@@ -450,8 +450,8 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\treturn token;\n";
 	ss << "}\n\n";
 
-	// Função main integrada que lê de arquivo
-	ss << "int main() {\n";
+	// Função main integrada que lê de arquivo e gera tokens.txt
+	ss << "int main(int argc, char* argv[]) {\n";
 	// Nomes dos tokens
 	ss << "\tconst char* tokenNames[] = {\n";
 	for (size_t i = 0; i < tokenNames.size(); ++i) {
@@ -459,9 +459,20 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	}
 	ss << "\t};\n\n";
 
-	ss << "\tFILE* file = fopen(\"tests/test_input.txt\", \"r\");\n";
+	ss << "\t// Verificar argumentos\n";
+	ss << "\tconst char* inputFile = (argc > 1) ? argv[1] : \"tests/test_input.txt\";\n";
+	ss << "\tconst char* outputFile = \"tokens.txt\";\n\n";
+
+	ss << "\tFILE* file = fopen(inputFile, \"r\");\n";
 	ss << "\tif (!file) {\n";
-	ss << "\t\tperror(\"Erro ao abrir tests/test_input.txt\");\n";
+	ss << "\t\tfprintf(stderr, \"Erro ao abrir arquivo: %s\\n\", inputFile);\n";
+	ss << "\t\treturn 1;\n";
+	ss << "\t}\n\n";
+
+	ss << "\tFILE* tokensFile = fopen(outputFile, \"w\");\n";
+	ss << "\tif (!tokensFile) {\n";
+	ss << "\t\tfprintf(stderr, \"Erro ao criar arquivo: %s\\n\", outputFile);\n";
+	ss << "\t\tfclose(file);\n";
 	ss << "\t\treturn 1;\n";
 	ss << "\t}\n\n";
 
@@ -485,7 +496,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\tif (len > 0 && line[len-1] == '\\n') {\n";
 	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
-	ss << "\t\tif (len > 0 && line[len-1] == '\\r') {\n"; // Handle Windows line endings
+		ss << "\t\tif (len > 0 && line[len-1] == '\\r') {\n";
 	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
 
@@ -507,7 +518,16 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\t\t\tchar sep[2] = {line[pos], '\\0'};\n";
 	ss << "\t\t\t\tstruct Token token = validateLexeme(sep);\n";
 	ss << "\t\t\t\tif (token.type >= 0) {\n";
-	ss << "\t\t\t\t\tprintf(\"  -> %s ('%c')\\n\", tokenNames[token.type], line[pos]);\n";
+	ss << "\t\t\t\t\t// Escrever no arquivo tokens.txt\n";
+	ss << "\t\t\t\t\tfprintf(tokensFile, \"%d %s\\n\", token.type, token.value);\n";
+	ss << "\t\t\t\t\t// Imprimir na tela com tratamento de caracteres não-imprimíveis\n";
+	ss << "\t\t\t\t\tprintf(\"  -> %s ('\", tokenNames[token.type]);\n";
+	ss << "\t\t\t\t\tif (line[pos] >= 32 && line[pos] < 127) {\n";
+	ss << "\t\t\t\t\t\tprintf(\"%c\", line[pos]);\n";
+	ss << "\t\t\t\t\t} else {\n";
+	ss << "\t\t\t\t\t\tprintf(\"[%d]\", (int)(unsigned char)line[pos]);\n";
+	ss << "\t\t\t\t\t}\n";
+	ss << "\t\t\t\t\tprintf(\"')\\n\");\n";
 	ss << "\t\t\t\t} else {\n";
 	ss << "\t\t\t\t\tprintf(\"  -> Não reconhecido: '%c'\\n\", line[pos]);\n";
 	ss << "\t\t\t\t}\n";
@@ -520,6 +540,9 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\t\t\t\t// Validar o lexema completo contra todos os tokens\n";
 	ss << "\t\t\t\t\tstruct Token token = validateLexeme(lexeme);\n";
 	ss << "\t\t\t\t\tif (token.type >= 0) {\n";
+	ss << "\t\t\t\t\t\t// Escrever no arquivo tokens.txt\n";
+	ss << "\t\t\t\t\t\tfprintf(tokensFile, \"%d %s\\n\", token.type, token.value);\n";
+	ss << "\t\t\t\t\t\t// Imprimir na tela\n";
 	ss << "\t\t\t\t\t\tprintf(\"  -> %s ('%s')\\n\", tokenNames[token.type], token.value);\n";
 	ss << "\t\t\t\t\t} else {\n";
 	ss << "\t\t\t\t\t\tprintf(\"  -> Erro: '%s' não corresponde a nenhum token\\n\", lexeme);\n";
@@ -534,7 +557,9 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t}\n\n";
 
 	ss << "\tfclose(file);\n";
+	ss << "\tfclose(tokensFile);\n";
 	ss << "\tprintf(\"\\n\");\n";
+	ss << "\tprintf(\"Tokens salvos em: %s\\n\", outputFile);\n";
 	ss << "\treturn 0;\n";
 	ss << "}\n";
 
