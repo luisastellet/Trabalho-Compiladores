@@ -14,12 +14,12 @@ Alunos: Alonso Breda Bassini, Luisa Muniz Stellet e Miguel Bárbaro Jehle
          │ gera
          ▼
 ┌─────────────────┐
-│  scanner.c (C)  │
+│  scanner.c (C)  │  ← tests/test_input.txt
 └────────┬────────┘
          │ processa
          ▼
 ┌─────────────────┐
-│  tokens.txt     │  ← tests/test_input.txt
+│  tokens.txt     │
 └────────┬────────┘
          │ lê
          ▼
@@ -196,13 +196,6 @@ Expression 3:
 ```bash
 make clean  # Remove binários e arquivos gerados
 ```
-
-## 📚 Documentação Adicional
-
-- `INTEGRATION.md` - Detalhes da integração scanner/parser
-- `racket/DESIGN.md` - Design do parser
-- `racket/ARCHITECTURE.md` - Arquitetura do sistema
-- `racket/PLAN.md` - Plano de implementação
 
 ---
 
