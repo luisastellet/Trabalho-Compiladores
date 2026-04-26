@@ -60,96 +60,92 @@ struct Token validateLexeme(const char* lexeme) {
 
 		switch (currentState) {
 			case 0: {
-				if (lexeme[pos] == 'r') {
-					nextState = 8;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == 'h') {
-					nextState = 8;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == 'i') {
+				if (lexeme[pos] == 'q') {
 					nextState = 10;
 					symbolLen = 1;
 				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 9;
+					symbolLen = 1;
+				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == 'q') {
-					nextState = 8;
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == 'g') {
-					nextState = 8;
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == '{') {
-					nextState = 11;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '}') {
-					nextState = 12;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '8') {
-					nextState = 5;
+ else if (lexeme[pos] == '7') {
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '(') {
@@ -160,55 +156,55 @@ struct Token validateLexeme(const char* lexeme) {
 					nextState = 3;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == ',') {
+ else if (lexeme[pos] == '0') {
 					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '1') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '2') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '3') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '4') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '5') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == '6') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '7') {
-					nextState = 5;
+					nextState = 4;
 					symbolLen = 1;
 				}
  else if ((symbolLen = matchSymbol(lexeme, pos, "\""))) {
 					nextState = 1;
 				}
+ else if (lexeme[pos] == '8') {
+					nextState = 4;
+					symbolLen = 1;
+				}
  else if (lexeme[pos] == '9') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '[') {
 					nextState = 5;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == ';') {
+ else if (lexeme[pos] == ']') {
 					nextState = 6;
 					symbolLen = 1;
 				}
- else if (lexeme[pos] == '=') {
-					nextState = 7;
-					symbolLen = 1;
-				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
@@ -216,19 +212,15 @@ struct Token validateLexeme(const char* lexeme) {
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 9;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -292,7 +284,7 @@ struct Token validateLexeme(const char* lexeme) {
 					symbolLen = 1;
 				}
  else if ((symbolLen = matchSymbol(lexeme, pos, "\""))) {
-					nextState = 13;
+					nextState = 11;
 				}
  else if (lexeme[pos] == 'l') {
 					nextState = 1;
@@ -354,50 +346,50 @@ struct Token validateLexeme(const char* lexeme) {
 			}
 
 			case 4: {
+				if (lexeme[pos] == '0') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '1') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '2') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '3') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '4') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '5') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '6') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '7') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '8') {
+					nextState = 4;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == '9') {
+					nextState = 4;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 5: {
-				if (lexeme[pos] == '0') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '1') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '2') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '3') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '4') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '5') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '6') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '7') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '8') {
-					nextState = 5;
-					symbolLen = 1;
-				}
- else if (lexeme[pos] == '9') {
-					nextState = 5;
-					symbolLen = 1;
-				}
 				break;
 			}
 
@@ -406,112 +398,216 @@ struct Token validateLexeme(const char* lexeme) {
 			}
 
 			case 7: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 8: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 12;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -519,107 +615,107 @@ struct Token validateLexeme(const char* lexeme) {
 
 			case 9: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 14;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 13;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -627,107 +723,107 @@ struct Token validateLexeme(const char* lexeme) {
 
 			case 10: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 14;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 15;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -738,116 +834,324 @@ struct Token validateLexeme(const char* lexeme) {
 			}
 
 			case 12: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 15;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 13: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
+					symbolLen = 1;
+				}
 				break;
 			}
 
 			case 14: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 16;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 16;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -855,107 +1159,107 @@ struct Token validateLexeme(const char* lexeme) {
 
 			case 15: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 17;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -963,107 +1267,107 @@ struct Token validateLexeme(const char* lexeme) {
 
 			case 16: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 18;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 17;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -1071,107 +1375,431 @@ struct Token validateLexeme(const char* lexeme) {
 
 			case 17: {
 				if (lexeme[pos] == 'n') {
-					nextState = 8;
+					nextState = 19;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'z') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'y') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'x') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'w') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'v') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'u') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 't') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 's') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'r') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'q') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'p') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'o') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'a') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'm') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'l') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'k') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'j') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'i') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'h') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'g') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'f') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'e') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'd') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'c') {
-					nextState = 8;
+					nextState = 7;
 					symbolLen = 1;
 				}
  else if (lexeme[pos] == 'b') {
-					nextState = 8;
+					nextState = 7;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 18: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 20;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 19: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+				break;
+			}
+
+			case 20: {
+				if (lexeme[pos] == 'n') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'z') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'y') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'x') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'w') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'v') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'u') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 't') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 's') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'r') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'q') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'p') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'o') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'a') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'm') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'l') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'k') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'j') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'i') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'h') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'g') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'f') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'e') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'd') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'c') {
+					nextState = 7;
+					symbolLen = 1;
+				}
+ else if (lexeme[pos] == 'b') {
+					nextState = 7;
 					symbolLen = 1;
 				}
 				break;
@@ -1190,15 +1818,15 @@ struct Token validateLexeme(const char* lexeme) {
 		// Verificar se é estado final (longest match)
 		switch (currentState) {
 			case 2:
-				lastFinalState = 5;
+				lastFinalState = 0;
 				lastFinalPos = pos;
 				break;
 			case 3:
-				lastFinalState = 6;
+				lastFinalState = 1;
 				lastFinalPos = pos;
 				break;
 			case 4:
-				lastFinalState = 10;
+				lastFinalState = 7;
 				lastFinalPos = pos;
 				break;
 			case 5:
@@ -1206,51 +1834,63 @@ struct Token validateLexeme(const char* lexeme) {
 				lastFinalPos = pos;
 				break;
 			case 6:
-				lastFinalState = 9;
-				lastFinalPos = pos;
-				break;
-			case 7:
-				lastFinalState = 11;
-				lastFinalPos = pos;
-				break;
-			case 8:
-				lastFinalState = 4;
-				lastFinalPos = pos;
-				break;
-			case 9:
-				lastFinalState = 4;
-				lastFinalPos = pos;
-				break;
-			case 10:
-				lastFinalState = 4;
-				lastFinalPos = pos;
-				break;
-			case 11:
-				lastFinalState = 7;
-				lastFinalPos = pos;
-				break;
-			case 12:
-				lastFinalState = 8;
-				lastFinalPos = pos;
-				break;
-			case 13:
 				lastFinalState = 3;
 				lastFinalPos = pos;
 				break;
-			case 14:
+			case 7:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 8:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 9:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 10:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 11:
+				lastFinalState = 8;
+				lastFinalPos = pos;
+				break;
+			case 12:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 13:
 				lastFinalState = 4;
+				lastFinalPos = pos;
+				break;
+			case 14:
+				lastFinalState = 9;
 				lastFinalPos = pos;
 				break;
 			case 15:
-				lastFinalState = 0;
+				lastFinalState = 9;
 				lastFinalPos = pos;
 				break;
 			case 16:
-				lastFinalState = 4;
+				lastFinalState = 9;
 				lastFinalPos = pos;
 				break;
 			case 17:
-				lastFinalState = 1;
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 18:
+				lastFinalState = 9;
+				lastFinalPos = pos;
+				break;
+			case 19:
+				lastFinalState = 5;
+				lastFinalPos = pos;
+				break;
+			case 20:
+				lastFinalState = 6;
 				lastFinalPos = pos;
 				break;
 			default:
@@ -1269,25 +1909,34 @@ struct Token validateLexeme(const char* lexeme) {
 	return token;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 	const char* tokenNames[] = {
-		"TOKEN_IF",
-		"TOKEN_ELSE",
-		"TOKEN_INT",
-		"TOKEN_STRING",
-		"TOKEN_ID",
 		"TOKEN_LPAREN",
 		"TOKEN_RPAREN",
-		"TOKEN_LBRACE",
-		"TOKEN_RBRACE",
-		"TOKEN_SEMICOLON",
-		"TOKEN_COMMA",
-		"TOKEN_EQUAL"
+		"TOKEN_LBRACKET",
+		"TOKEN_RBRACKET",
+		"TOKEN_IF",
+		"TOKEN_BEGIN",
+		"TOKEN_QUOTE",
+		"TOKEN_NUMBER",
+		"TOKEN_STRING",
+		"TOKEN_IDENTIFIER"
 	};
 
-	FILE* file = fopen("tests/test_input.txt", "r");
+	// Verificar argumentos
+	const char* inputFile = (argc > 1) ? argv[1] : "tests/test_input.txt";
+	const char* outputFile = "tokens.txt";
+
+	FILE* file = fopen(inputFile, "r");
 	if (!file) {
-		perror("Erro ao abrir tests/test_input.txt");
+		fprintf(stderr, "Erro ao abrir arquivo: %s\n", inputFile);
+		return 1;
+	}
+
+	FILE* tokensFile = fopen(outputFile, "w");
+	if (!tokensFile) {
+		fprintf(stderr, "Erro ao criar arquivo: %s\n", outputFile);
+		fclose(file);
 		return 1;
 	}
 
@@ -1305,8 +1954,6 @@ int main() {
 	printf("  Token %zu: %s\n", (size_t)7, tokenNames[7]);
 	printf("  Token %zu: %s\n", (size_t)8, tokenNames[8]);
 	printf("  Token %zu: %s\n", (size_t)9, tokenNames[9]);
-	printf("  Token %zu: %s\n", (size_t)10, tokenNames[10]);
-	printf("  Token %zu: %s\n", (size_t)11, tokenNames[11]);
 
 	printf("Testes:\n");
 	printf("─────────────────────────────────────\n");
@@ -1340,7 +1987,16 @@ int main() {
 				char sep[2] = {line[pos], '\0'};
 				struct Token token = validateLexeme(sep);
 				if (token.type >= 0) {
-					printf("  -> %s ('%c')\n", tokenNames[token.type], line[pos]);
+					// Escrever no arquivo tokens.txt
+					fprintf(tokensFile, "%d %s\n", token.type, token.value);
+					// Imprimir na tela com tratamento de caracteres não-imprimíveis
+					printf("  -> %s ('", tokenNames[token.type]);
+					if (line[pos] >= 32 && line[pos] < 127) {
+						printf("%c", line[pos]);
+					} else {
+						printf("[%d]", (int)(unsigned char)line[pos]);
+					}
+					printf("')\n");
 				} else {
 					printf("  -> Não reconhecido: '%c'\n", line[pos]);
 				}
@@ -1353,6 +2009,9 @@ int main() {
 					// Validar o lexema completo contra todos os tokens
 					struct Token token = validateLexeme(lexeme);
 					if (token.type >= 0) {
+						// Escrever no arquivo tokens.txt
+						fprintf(tokensFile, "%d %s\n", token.type, token.value);
+						// Imprimir na tela
 						printf("  -> %s ('%s')\n", tokenNames[token.type], token.value);
 					} else {
 						printf("  -> Erro: '%s' não corresponde a nenhum token\n", lexeme);
@@ -1367,6 +2026,8 @@ int main() {
 	}
 
 	fclose(file);
+	fclose(tokensFile);
 	printf("\n");
+	printf("Tokens salvos em: %s\n", outputFile);
 	return 0;
 }

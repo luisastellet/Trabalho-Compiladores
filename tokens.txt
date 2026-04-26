@@ -98,7 +98,7 @@
 1 )
 9 x
 7 42
-9 hello
+8 "hello"
 9 foo
 1 )
 0 (
