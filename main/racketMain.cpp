@@ -10,12 +10,12 @@
 using namespace racket;
 
 /**
- * @brief Read entire file into a string
+ * @brief Ler todo o arquivo para uma string
  */
 std::string readFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + filename);
+        throw std::runtime_error("Nao foi possivel abrir o arquivo: " + filename);
     }
     
     std::stringstream buffer;
@@ -24,12 +24,11 @@ std::string readFile(const std::string& filename) {
 }
 
 /**
- * @brief Test the lexer by reading tokens from tokens.txt
+ * @brief Testar o lexer lendo tokens de tokens.txt
  */
 void testLexer(const std::string& tokensFile) {
-    std::cout << "=== LEXER TEST ===" << std::endl;
-    std::cout << "Using: Generated Scanner (via tokens.txt)" << std::endl;
-    std::cout << "Tokens file: " << tokensFile << std::endl;
+    std::cout << "\n- TESTE DO LEXER\n" << std::endl;
+    std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
     std::cout << std::endl;
     
     ScannerAdapter scanner(tokensFile);
@@ -43,12 +42,11 @@ void testLexer(const std::string& tokensFile) {
 }
 
 /**
- * @brief Test the parser by parsing tokens from tokens.txt
+ * @brief Testar o parser lendo tokens de tokens.txt
  */
 void testParser(const std::string& tokensFile) {
-    std::cout << "=== PARSER TEST ===" << std::endl;
-    std::cout << "Using: Generated Scanner (via tokens.txt)" << std::endl;
-    std::cout << "Tokens file: " << tokensFile << std::endl;
+    std::cout << "\n- TESTE DO PARSER\n" << std::endl;
+    std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
     std::cout << std::endl;
     
     try {
@@ -61,22 +59,21 @@ void testParser(const std::string& tokensFile) {
         ast->print();
         std::cout << std::endl;
         
-        std::cout << "✓ Parse successful!" << std::endl;
+        std::cout << "✓ Parse bem-sucedido!" << std::endl;
     } catch (const ParseError& e) {
         std::cerr << "✗ " << e.getFormattedMessage() << std::endl;
     } catch (const std::exception& e) {
-        std::cerr << "✗ Error: " << e.what() << std::endl;
+        std::cerr << "✗ Erro: " << e.what() << std::endl;
     }
     std::cout << std::endl;
 }
 
 /**
- * @brief Test parsing multiple expressions from tokens.txt
+ * @brief Testar o parser lendo múltiplas expressões de tokens.txt
  */
 void testParserMultiple(const std::string& tokensFile) {
-    std::cout << "=== PARSER MULTIPLE TEST ===" << std::endl;
-    std::cout << "Using: Generated Scanner (via tokens.txt)" << std::endl;
-    std::cout << "Tokens file: " << tokensFile << std::endl;
+    std::cout << "\n- TESTE DO PARSER MULTIPLO\n" << std::endl;
+    std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
     std::cout << std::endl;
     
     try {
@@ -85,68 +82,68 @@ void testParserMultiple(const std::string& tokensFile) {
         
         auto expressions = parser.parseMultiple();
         
-        std::cout << "Parsed " << expressions.size() << " expressions:" << std::endl;
+        std::cout << "Expressoes analisadas: " << expressions.size() << std::endl;
         std::cout << std::endl;
         
         for (size_t i = 0; i < expressions.size(); ++i) {
-            std::cout << "Expression " << (i + 1) << ":" << std::endl;
+            std::cout << "Expressao " << (i + 1) << ":" << std::endl;
             expressions[i]->print(1);
             std::cout << std::endl;
         }
         
-        std::cout << "✓ All expressions parsed successfully!" << std::endl;
+        std::cout << "✓ Todas as expressoes foram analisadas com sucesso!" << std::endl;
     } catch (const ParseError& e) {
         std::cerr << "✗ " << e.getFormattedMessage() << std::endl;
     } catch (const std::exception& e) {
-        std::cerr << "✗ Error: " << e.what() << std::endl;
+        std::cerr << "✗ Erro: " << e.what() << std::endl;
     }
     std::cout << std::endl;
 }
 
 /**
- * @brief Run interactive REPL (not supported with tokens.txt flow)
+ * @brief Executar REPL interativo (não suportado com o fluxo tokens.txt)
  */
 void runREPL() {
-    std::cerr << "Error: Interactive REPL not supported with tokens.txt flow" << std::endl;
-    std::cerr << "Please use the scanner → tokens.txt → parser flow instead" << std::endl;
+    std::cerr << "Erro: REPL interativo não suportado com o fluxo tokens.txt" << std::endl;
+    std::cerr << "Use o fluxo scanner → tokens.txt → parser" << std::endl;
 }
 
 /**
- * @brief Show FIRST and FOLLOW sets
+ * @brief Mostrar conjuntos FIRST e FOLLOW
  */
 void showFirstFollow() {
-    std::cout << "=== FIRST AND FOLLOW ANALYSIS ===" << std::endl;
-    std::cout << "Calculating FIRST and FOLLOW sets algorithmically..." << std::endl;
+    std::cout << "\n- ANALISE DE FIRST E FOLLOW\n" << std::endl;
+    std::cout << "Calculando FIRST e FOLLOW" << std::endl;
     std::cout << std::endl;
     
     FirstFollowCalculator calculator;
     
-    // Calculate FIRST sets
+    // Calcular conjuntos FIRST
     calculator.calculateFirst();
     calculator.printFirst();
     
-    // Calculate FOLLOW sets
+    // Calcular conjuntos FOLLOW
     calculator.calculateFollow();
     calculator.printFollow();
     
-    // Verify LL(1)
+    // Verificar LL(1)
     calculator.isLL1();
 }
 
 /**
- * @brief Print usage information
+ * @brief Imprimir informações de uso
  */
 void printUsage(const char* programName) {
-    std::cout << "Usage: " << programName << " [options] [file]" << std::endl;
+    std::cout << "Uso: " << programName << " [opções] [arquivo]" << std::endl;
     std::cout << std::endl;
-    std::cout << "Options:" << std::endl;
-    std::cout << "  -h, --help       Show this help message" << std::endl;
-    std::cout << "  -l, --lex        Run lexer test only" << std::endl;
-    std::cout << "  -p, --parse      Run parser test (default)" << std::endl;
-    std::cout << "  -m, --multiple   Parse multiple expressions from file" << std::endl;
-    std::cout << "  -f, --first-follow  Show FIRST and FOLLOW sets" << std::endl;
+    std::cout << "Opções:" << std::endl;
+    std::cout << "  -h, --help       Mostrar esta mensagem de ajuda" << std::endl;
+    std::cout << "  -l, --lex        Executar apenas o teste do lexer" << std::endl;
+    std::cout << "  -p, --parse      Executar o teste do parser (padrão)" << std::endl;
+    std::cout << "  -m, --multiple   Analisar múltiplas expressões a partir de um arquivo" << std::endl;
+    std::cout << "  -f, --first-follow  Mostrar conjuntos FIRST e FOLLOW" << std::endl;
     std::cout << std::endl;
-    std::cout << "Examples:" << std::endl;
+    std::cout << "Exemplos:" << std::endl;
     std::cout << "  " << programName << " tokens.txt" << std::endl;
     std::cout << "  " << programName << " -l tokens.txt" << std::endl;
     std::cout << "  " << programName << " -m tokens.txt" << std::endl;
@@ -154,10 +151,10 @@ void printUsage(const char* programName) {
 }
 
 /**
- * @brief Main entry point
+ * @brief Ponto de entrada principal
+
  */
 int main(int argc, char* argv[]) {
-    // Parse command line arguments
     bool lexOnly = false;
     bool parseMultiple = false;
     bool interactive = false;
@@ -173,7 +170,7 @@ int main(int argc, char* argv[]) {
         } else if (arg == "-l" || arg == "--lex") {
             lexOnly = true;
         } else if (arg == "-p" || arg == "--parse") {
-            // Single parse mode (default behavior)
+            // Modo de análise única (comportamento padrão)
         } else if (arg == "-m" || arg == "--multiple") {
             parseMultiple = true;
         } else if (arg == "-f" || arg == "--first-follow") {
@@ -183,25 +180,23 @@ int main(int argc, char* argv[]) {
         } else if (arg[0] != '-') {
             filename = arg;
         } else {
-            std::cerr << "Unknown option: " << arg << std::endl;
+            std::cerr << "Opção desconhecida: " << arg << std::endl;
             printUsage(argv[0]);
             return 1;
         }
     }
     
-    // Show FIRST/FOLLOW sets
+    // Mostrar conjuntos FIRST e FOLLOW
     if (showFirstFollowSets) {
         showFirstFollow();
         return 0;
     }
     
-    // Interactive mode
     if (interactive) {
         runREPL();
         return 0;
     }
     
-    // Use tokens.txt as default if no file specified
     std::string tokensFile = filename.empty() ? "tokens.txt" : filename;
     
     try {
@@ -210,15 +205,12 @@ int main(int argc, char* argv[]) {
         } else if (parseMultiple) {
             testParserMultiple(tokensFile);
         } else {
-            // Default: parse single expression
             testParser(tokensFile);
         }
         
         return 0;
     } catch (const std::exception& e) {
-        std::cerr << "Fatal error: " << e.what() << std::endl;
+        std::cerr << "Erro fatal: " << e.what() << std::endl;
         return 1;
     }
 }
-
-// Made with Bob

@@ -469,7 +469,7 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 	ss << "\t\tif (len > 0 && line[len-1] == '\\n') {\n";
 	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
-	ss << "\t\tif (len > 0 && line[len-1] == '\\r') {\n"; // Handle Windows line endings
+		ss << "\t\tif (len > 0 && line[len-1] == '\\r') {\n";
 	ss << "\t\t\tline[len-1] = '\\0';\n";
 	ss << "\t\t}\n";
 

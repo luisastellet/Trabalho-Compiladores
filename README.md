@@ -2,7 +2,9 @@
 
 Implementação de um compilador completo com gerador de scanner, scanner léxico e parser sintático para a linguagem Racket.
 
-## 🎯 Arquitetura do Sistema
+Alunos: Alonso Breda Bassini, Luisa Muniz Stellet e Miguel Bárbaro Jehle
+
+## Arquitetura do Sistema
 
 ```
 ┌─────────────────┐
@@ -33,11 +35,11 @@ Implementação de um compilador completo com gerador de scanner, scanner léxic
 └─────────────────┘
 ```
 
-## 🚀 Uso Rápido
+## Uso Rápido
 
 ### Build e Teste Completo
 
-**Modo Normal (saída limpa):**
+**Modo Normal:**
 ```bash
 ./build_and_run.sh
 ```
@@ -50,12 +52,12 @@ Implementação de um compilador completo com gerador de scanner, scanner léxic
 ```
 
 Este script executa todo o fluxo:
-1. ✅ Compila o gerador de scanner
-2. ✅ Gera o scanner.c
-3. ✅ Compila o scanner
-4. ✅ Gera tokens.txt
-5. ✅ Compila o parser
-6. ✅ Executa testes e mostra AST
+1. Compila o gerador de scanner
+2. Gera o scanner.c
+3. Compila o scanner
+4. Gera tokens.txt
+5. Compila o parser
+6. Executa testes e mostra AST
 
 ### Comandos Individuais
 
@@ -85,7 +87,7 @@ make racket
 ./main/racket_parser -f
 ```
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 .
@@ -114,16 +116,16 @@ make racket
     └── test_input.txt       # Código Racket de teste
 ```
 
-## 🔧 Tecnologias
+## Tecnologias
 
 - **Gerador de Scanner**: C++ (NFA → DFA → Minimização)
 - **Scanner**: C (gerado automaticamente)
 - **Parser**: C++ (Recursive Descent, LL(1))
 - **Formato de Tokens**: Arquivo texto intermediário
 
-## 📝 Sintaxe das Regex
+## Sintaxe das Regex
 
-O gerador usa **notação polonesa reversa (posfixa)**:
+O gerador usa **notação posfixa**:
 
 ```
 i f .                    # "if" (concatenação)
@@ -140,7 +142,7 @@ i f .                    # "if" (concatenação)
 - `?` = zero ou um (unário)
 - `[a-z]` = classe de caracteres
 
-## 🎓 Características do Parser
+## Características do Parser
 
 - **Tipo**: Recursive Descent (Top-Down)
 - **Gramática**: LL(1)
@@ -157,7 +159,7 @@ i f .                    # "if" (concatenação)
 - `StringNode`: Strings
 - `BooleanNode`: Booleanos
 
-## ✅ Exemplo de Uso
+## Exemplo de Uso
 
 **Entrada** (`tests/test_input.txt`):
 ```racket
@@ -189,7 +191,7 @@ Expression 3:
       [0]: IdNode: foo
 ```
 
-## 🧹 Limpeza
+## Limpeza
 
 ```bash
 make clean  # Remove binários e arquivos gerados

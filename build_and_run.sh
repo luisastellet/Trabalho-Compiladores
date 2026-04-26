@@ -36,7 +36,7 @@ echo -e "${BLUE}      Gerador → Scanner → tokens.txt → Parser → AST${NC}
 if [ "$VERBOSE" = true ]; then
     echo -e "${BLUE}      Modo: VERBOSE (mostrando detalhes de debug)${NC}"
 else
-    echo -e "${BLUE}      Modo: NORMAL (use -v para modo verbose)${NC}"
+    echo -e "${BLUE}      Modo: NORMAL${NC}"
 fi
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}\n"
 
@@ -89,7 +89,7 @@ if [ ! -f "$BUILD_DIR/tokens.txt" ]; then
     echo -e "${RED}✗ Erro: tokens.txt não foi gerado${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ tokens.txt gerado ($(wc -l < tokens.txt) tokens)${NC}\n"
+echo -e "${GREEN}✓ tokens.txt gerado ($(wc -l < tokens.txt | xargs) tokens)${NC}\n"
 
 echo -e "${YELLOW}[6/6] Compilando Parser Racket (C++)...${NC}"
 make racket
@@ -106,11 +106,11 @@ echo -e "${BLUE}═════════════════════�
 
 echo -e "${YELLOW}━━━ Teste 1: Tokens Gerados ━━━${NC}"
 if [ "$VERBOSE" = true ]; then
-    echo -e "${BLUE}Arquivo:${NC} tokens.txt ($(wc -l < tokens.txt) linhas)"
+    echo -e "${BLUE}Arquivo:${NC} tokens.txt ($(wc -l < tokens.txt | xargs) linhas)"
     echo -e "${BLUE}Conteúdo completo:${NC}"
     cat tokens.txt
 else
-    echo -e "${BLUE}Arquivo:${NC} tokens.txt ($(wc -l < tokens.txt) linhas)"
+    echo -e "${BLUE}Arquivo:${NC} tokens.txt ($(wc -l < tokens.txt | xargs) linhas)"
     head -6 tokens.txt
     echo -e "${BLUE}...${NC}"
 fi
@@ -129,7 +129,7 @@ echo -e "${GREEN}      ✓ Build e testes concluídos com sucesso!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}\n"
 
 echo -e "${BLUE}Fluxo Completo:${NC}"
-echo -e "  1. ${YELLOW}Gerador de Scanner${NC} (automaton) + regex → gera scanner.c"
+echo -e "  1. ${YELLOW}Gerador de Scanner${NC} (automato) + regex → gera scanner.c"
 echo -e "  2. ${YELLOW}Scanner${NC} (scanner.c) + input → gera tokens.txt"
 echo -e "  3. ${YELLOW}Parser Racket${NC} (racket_parser) + tokens.txt → gera AST"
 echo ""

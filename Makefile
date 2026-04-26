@@ -35,7 +35,7 @@ test-racket: $(RACKET_TARGET)
 repl: $(RACKET_TARGET)
 	./main/$(RACKET_TARGET) -i
 
-# Clean all build artifacts
+# Limpa todos os arquivos de build
 clean:
 	rm -f main/$(AUTOMATON_TARGET) main/$(RACKET_TARGET)
 

@@ -8,32 +8,29 @@
 
 namespace racket {
 
-// Forward declarations
+// Declarações antecipadas
 class ASTVisitor;
 
-// ============================================================================
-// Base AST Node
-// ============================================================================
+// Nó base da AST
 
 /**
- * @brief Base class for all AST nodes
+ * @brief Nó base para todos os nós da AST
  * 
- * All nodes in the Abstract Syntax Tree inherit from this class.
- * Implements the Visitor pattern for tree traversal.
+ * Todos os nós na Árvore de Sintaxe Abstrata herdam desta classe.
  */
 class ASTNode {
 public:
     virtual ~ASTNode() = default;
     
     /**
-     * @brief Accept a visitor for tree traversal
-     * @param visitor The visitor to accept
+     * @brief Aceita um visitante para a travessia da árvore
+     * @param visitor O visitante a aceitar
      */
     virtual void accept(ASTVisitor& visitor) = 0;
     
     /**
-     * @brief Print the AST node (for debugging)
-     * @param indent Indentation level
+     * @brief Imprime o nó da AST
+     * @param indent Nível de indentação
      */
     virtual void print(int indent = 0) const = 0;
     
@@ -45,29 +42,23 @@ protected:
     }
 };
 
-// ============================================================================
-// Expression Nodes
-// ============================================================================
+// Nós de Expressão
 
 /**
- * @brief Base class for all expression nodes
- * 
- * In Racket, everything is an expression that evaluates to a value.
+ * @brief Nó base para todos os nós de expressão
  */
 class ExprNode : public ASTNode {
 public:
     virtual ~ExprNode() = default;
 };
 
-// ============================================================================
-// Literal Nodes
-// ============================================================================
+// Nós Literais
 
 /**
- * @brief Identifier node (variable reference)
+ * @brief Nó de identificador
  * 
- * Represents: id
- * Example: x, foo, my-var
+ * Representa: id
+ * Exemplo: x, foo, my-var
  */
 class IdNode : public ExprNode {
 public:
@@ -80,10 +71,10 @@ public:
 };
 
 /**
- * @brief Number literal node
+ * @brief Nó literal numérico
  * 
- * Represents: numeric literals
- * Example: 42, 3.14, -5
+ * Representa: literais numéricos
+ * Exemplo: 42, 3.14, -5
  */
 class NumberNode : public ExprNode {
 public:
@@ -96,10 +87,10 @@ public:
 };
 
 /**
- * @brief String literal node
+ * @brief Nó literal de string
  * 
- * Represents: string literals
- * Example: "hello", "world"
+ * Representa: literais de string
+ * Exemplo: "hello", "world"
  */
 class StringNode : public ExprNode {
 public:
@@ -112,10 +103,10 @@ public:
 };
 
 /**
- * @brief Boolean literal node
+ * @brief Nó literal booleano
  * 
- * Represents: #t or #f
- * Example: #t, #f
+ * Representa: #t ou #f
+ * Exemplo: #t, #f
  */
 class BooleanNode : public ExprNode {
 public:
@@ -127,17 +118,15 @@ public:
     void print(int indent = 0) const override;
 };
 
-// ============================================================================
-// Special Form Nodes
-// ============================================================================
+// Nós de formas especiais
 
 /**
- * @brief Quote expression node
+ * @brief Nó de expressão quote
  * 
- * Represents: (quote datum)
- * Example: (quote x), (quote (1 2 3))
+ * Representa: (quote datum)
+ * Exemplo: (quote x), (quote (1 2 3))
  * 
- * Quote prevents evaluation of its argument.
+ * Quote impede a avaliação de seu argumento.
  */
 class QuoteNode : public ExprNode {
 public:
@@ -151,12 +140,12 @@ public:
 };
 
 /**
- * @brief If conditional expression node
+ * @brief Nó de expressão condicional if
  * 
- * Represents: (if expr expr expr)
- * Example: (if #t 1 0)
+ * Representa: (if expr expr expr)
+ * Exemplo: (if #t 1 0)
  * 
- * Evaluates condition, then either thenBranch or elseBranch.
+ * Avalia a condição, depois executa thenBranch ou elseBranch.
  */
 class IfNode : public ExprNode {
 public:
@@ -176,12 +165,12 @@ public:
 };
 
 /**
- * @brief Begin sequence expression node
+ * @brief Nó de expressão de sequência begin
  * 
- * Represents: (begin expr ...+)
- * Example: (begin (print "hi") 42)
+ * Representa: (begin expr ...+)
+ * Exemplo: (begin (print "hi") 42)
  * 
- * Evaluates expressions in sequence, returns last value.
+ * Avalia expressões em sequência, retorna o último valor.
  */
 class BeginNode : public ExprNode {
 public:
@@ -195,12 +184,12 @@ public:
 };
 
 /**
- * @brief Function application node
+ * @brief Nó de aplicação de função
  * 
- * Represents: (#%plain-app expr ...+)
- * Example: (#%plain-app + 1 2)
+ * Representa: (#%plain-app expr ...+)
+ * Exemplo: (#%plain-app + 1 2)
  * 
- * Applies function to arguments.
+ * Aplica uma função a seus argumentos.
  */
 class AppNode : public ExprNode {
 public:
@@ -216,15 +205,13 @@ public:
     void print(int indent = 0) const override;
 };
 
-// ============================================================================
-// Visitor Pattern Interface
-// ============================================================================
+// Interface do Padrão Visitor
 
 /**
- * @brief Visitor interface for AST traversal
+ * @brief Interface Visitor para percorrer a AST
  * 
- * Implements the Visitor pattern to allow operations on the AST
- * without modifying the node classes.
+ * Implementa o padrão Visitor para permitir operações na AST
+ * sem modificar as classes de nó.
  */
 class ASTVisitor {
 public:
@@ -240,8 +227,5 @@ public:
     virtual void visit(AppNode& node) = 0;
 };
 
-} // namespace racket
-
-#endif // RACKET_AST_HPP
-
-// Made with Bob
+} 
+#endif 

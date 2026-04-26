@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <set>
 
 namespace racket {
 
@@ -14,9 +15,7 @@ namespace racket {
 class ScannerAdapter;
 class FirstFollowCalculator;
 
-// ============================================================================
 // Token Types
-// ============================================================================
 
 enum class TokenType {
     // Delimiters
@@ -47,9 +46,7 @@ enum class TokenType {
     END_OF_FILE      // EOF
 };
 
-// ============================================================================
 // Token Structure
-// ============================================================================
 
 struct Token {
     TokenType type;
@@ -66,9 +63,7 @@ struct Token {
     void print() const;
 };
 
-// ============================================================================
 // Parser Exception
-// ============================================================================
 
 /**
  * @brief Exception thrown when parsing fails
@@ -89,9 +84,7 @@ public:
     }
 };
 
-// ============================================================================
 // Parser Class
-// ============================================================================
 
 /**
  * @brief Recursive descent parser for Racket
@@ -131,8 +124,7 @@ public:
     
     /**
      * @brief Parse multiple expressions (for testing)
-     * @return Vector of expression nodes
-     * @throws ParseError if parsing fails
+     * @return 
      */
     std::vector<std::unique_ptr<ExprNode>> parseMultiple();
     
@@ -141,11 +133,23 @@ public:
      */
     const FirstFollowCalculator* getFirstFollowCalculator() const;
     
+    /**
+     * @brief Verifica se algum erro foi encontrado durante a análise
+     */
+    bool hasErrors() const { return errorCount > 0; }
+    
+    /**
+     * @brief Retorna o número total de erros encontrados
+     */
+    int getErrorCount() const { return errorCount; }
+    
 private:
     ScannerAdapter& scanner;
     Token currentToken;
     FirstFollowCalculator* firstFollowCalc;
     bool useFirstFollowSets;
+    int errorCount;
+    std::string tokensFilename;
     
     // Token management
     
@@ -234,41 +238,58 @@ private:
     // Error handling
     
     /**
-     * @brief Throw a parse error with current token location
-     * @param message Error message
+     * @brief Lança erro de parse com localização do token atual
+     * @param message Mensagem de erro
      * @throws ParseError
      */
     [[noreturn]] void error(const std::string& message);
     
     /**
-     * @brief Synchronize parser after error (for error recovery)
+     * @brief Reporta um erro sem lancar excecao
+     */
+    void reportError(const std::string& message);
+    
+    /**
+     * @brief Recuperação em Modo Pânico para o não-terminal A.
+     *
+     * Algoritmo:
+     *  - Se token atual é EOF ou pertence a FOLLOW(A) → descarta A (retorna false)
+     *  - Caso contrário → salta tokens até FIRST(A) ∪ FOLLOW(A)
+     *    - Se parou em FIRST(A) → retorna true (caller pode tentar parsear A)
+     *    - Se parou em FOLLOW(A) ou EOF → retorna false (desempilha A)
+     *
+     * @param nonTerminal Nome do não-terminal em recuperação
+     * @return true se o parser pode tentar parsear o símbolo novamente; false para desempilhar
+     */
+    bool panicModeRecover(const std::string& nonTerminal);
+    
+    /**
+     * @brief Avança tokens até encontrar o início de uma nova expressão (FIRST(expr))
      */
     void synchronize();
     
     // FIRST/FOLLOW based parsing helpers
     
     /**
-     * @brief Check if current token is in FIRST set of a non-terminal
-     * @param nonTerminal The non-terminal to check
-     * @return true if current token is in FIRST(nonTerminal)
+     * @brief Checa se o token atual pertence ao conjunto FIRST de um não-terminal
+     * @param nonTerminal Nome do não-terminal a ser verificado
+     * @return true se o token atual está em FIRST(nonTerminal)
      */
     bool inFirst(const std::string& nonTerminal) const;
     
     /**
-     * @brief Check if current token is in FOLLOW set of a non-terminal
-     * @param nonTerminal The non-terminal to check
-     * @return true if current token is in FOLLOW(nonTerminal)
+     * @brief Checa se o token atual pertence ao conjunto FOLLOW de um não-terminal
+     * @param nonTerminal Nome do não-terminal a ser verificado
+     * @return true se o token atual está em FOLLOW(nonTerminal)
      */
     bool inFollow(const std::string& nonTerminal) const;
     
     /**
-     * @brief Convert TokenType to string for FIRST/FOLLOW lookup
+     * @brief Converte TokenType para string para lookup em FIRST/FOLLOW
      */
     std::string tokenTypeToString(TokenType type) const;
 };
 
-} // namespace racket
+} 
 
-#endif // RACKET_PARSER_HPP
-
-// Made with Bob
+#endif 

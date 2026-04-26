@@ -5,9 +5,7 @@
 
 namespace racket {
 
-// ============================================================================
-// Token Implementation
-// ============================================================================
+// Implementação do Token
 
 void Token::print() const {
     std::cout << "[" << line << ":" << column << "] ";
@@ -43,24 +41,23 @@ void Token::print() const {
     std::cout << std::endl;
 }
 
-// ============================================================================
-// RacketParser Implementation
-// ============================================================================
+// Implementação do RacketParser
 
 RacketParser::RacketParser(ScannerAdapter& scanner, bool useFirstFollow)
     : scanner(scanner), currentToken(TokenType::END_OF_FILE, "", 0, 0),
-      firstFollowCalc(nullptr), useFirstFollowSets(useFirstFollow) {
+      firstFollowCalc(nullptr), useFirstFollowSets(useFirstFollow), errorCount(0),
+      tokensFilename(scanner.getFilename()) {
     
-    // Initialize FIRST/FOLLOW calculator if enabled
+    // Inicializar calculadora FIRST/FOLLOW se habilitada
     if (useFirstFollowSets) {
         firstFollowCalc = new FirstFollowCalculator();
         firstFollowCalc->calculateFirst();
         firstFollowCalc->calculateFollow();
         
-        std::cout << "Parser initialized with FIRST/FOLLOW sets" << std::endl;
+        std::cout << "Parser inicializado com conjuntos FIRST/FOLLOW" << std::endl;
     }
     
-    // Initialize by getting the first token
+    // Inicializar obtendo o primeiro token
     advance();
 }
 
@@ -76,14 +73,17 @@ const FirstFollowCalculator* RacketParser::getFirstFollowCalculator() const {
 
 std::unique_ptr<ExprNode> RacketParser::parse() {
     if (isAtEnd()) {
-        error("Empty input");
+        error("Entrada vazia");
     }
     
     auto expr = parseExpr();
     
-    // Ensure we've consumed all input
+    if (!expr) {
+        error("Falha ao parsear expressao");
+    }
+    
     if (!isAtEnd()) {
-        error("Unexpected tokens after expression");
+        error("Tokens inesperados depois da expressao");
     }
     
     return expr;
@@ -91,17 +91,39 @@ std::unique_ptr<ExprNode> RacketParser::parse() {
 
 std::vector<std::unique_ptr<ExprNode>> RacketParser::parseMultiple() {
     std::vector<std::unique_ptr<ExprNode>> expressions;
-    
+
     while (!isAtEnd()) {
-        expressions.push_back(parseExpr());
+        // Registra posicao antes de tentar parsear para detectar ausencia de progresso
+        int lineBefore   = currentToken.line;
+        int columnBefore = currentToken.column;
+
+        try {
+            auto expr = parseExpr();
+            if (expr != nullptr) {
+                expressions.push_back(std::move(expr));
+            } else {
+                // parseExpr retornou nullptr, erro ja foi reportado.
+                if (currentToken.line == lineBefore && currentToken.column == columnBefore) {
+                    advance(); 
+                }
+            }
+        } catch (const ParseError& e) {
+            errorCount++;
+            std::cerr << "\nErro sintatico [" << tokensFilename << ", linha " << e.line
+                      << "]: " << e.what() << std::endl;
+            synchronize();
+        }
     }
-    
+
+    if (errorCount > 0) {
+        std::cerr << "\nForam encontrados " << errorCount
+                  << " erros sintaticos.\n" << std::endl;
+    }
+
     return expressions;
 }
 
-// ============================================================================
-// Token Management
-// ============================================================================
+// Gerenciamento de tokens
 
 void RacketParser::advance() {
     currentToken = scanner.nextToken();
@@ -131,29 +153,34 @@ bool racket::RacketParser::isAtEnd() const {
     return check(TokenType::END_OF_FILE);
 }
 
-// ============================================================================
-// Parsing Methods
-// ============================================================================
+// Métodos de Parsing
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseExpr() {
-    // expr = id | number | string | boolean | (...)
-    
-    // Use FIRST sets if enabled
+    bool validStart = !(useFirstFollowSets && firstFollowCalc) || inFirst("expr");
+
+    if (!validStart) {
+        reportError("'" + currentToken.lexeme + "' nao pode iniciar uma expressao");
+        bool canRetry = panicModeRecover("expr");
+        if (!canRetry) return nullptr;
+    }
+
+    // Usar conjuntos FIRST se habilitado
     if (useFirstFollowSets && firstFollowCalc) {
         if (inFirst("list")) {
             return parseList();
         } else if (inFirst("literal")) {
             return parseLiteral();
         } else {
-            error("Expected expression (current token not in FIRST(expr))");
+            reportError("'" + currentToken.lexeme + "' nao inicia nenhuma forma valida de expressao");
+            return nullptr;
         }
     }
-    
-    // Fallback to hardcoded checks
+
+    // Verificações diretas (sem conjuntos FIRST/FOLLOW)
     if (check(TokenType::LEFT_PAREN) || check(TokenType::LEFT_BRACKET)) {
         return parseList();
     }
-    
+
     return parseLiteral();
 }
 
@@ -183,31 +210,31 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseLiteral() {
         advance();
         return std::unique_ptr<ExprNode>(new BooleanNode(value));
     }
-    
-    error("Expected literal (identifier, number, string, or boolean)");
+
+    // Celula vazia: nenhum literal reconhecido
+    reportError("esperado identificador, numero, string ou booleano, mas encontrado '" + currentToken.lexeme + "'");
+    return nullptr;
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
     // List = ( special-form | application )
     
-    // Consume opening paren/bracket
     bool isSquare = check(TokenType::LEFT_BRACKET);
     if (isSquare) {
-        consume(TokenType::LEFT_BRACKET, "Expected '['");
+        consume(TokenType::LEFT_BRACKET, "Esperava '['");
     } else {
-        consume(TokenType::LEFT_PAREN, "Expected '('");
+        consume(TokenType::LEFT_PAREN, "Esperava '('");
     }
     
-    // Check for empty list (error for now)
     if (check(TokenType::RIGHT_PAREN) || check(TokenType::RIGHT_BRACKET)) {
-        error("Empty list not supported in this grammar");
+        reportError("lista vazia '()' nao e permitida pela gramatica");
+        advance();
+        return nullptr;
     }
     
-    // Determine what kind of form this is using FIRST sets
     std::unique_ptr<ExprNode> result;
     
     if (useFirstFollowSets && firstFollowCalc) {
-        // Use FIRST sets to decide which production to use
         if (inFirst("quote")) {
             result = parseQuote();
         } else if (inFirst("if")) {
@@ -217,7 +244,6 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
         } else if (inFirst("app")) {
             result = parseApp();
         } else {
-            // Implicit application (not in grammar, but supported)
             std::vector<std::unique_ptr<ExprNode>> exprs;
             
             while (!check(TokenType::RIGHT_PAREN) && !check(TokenType::RIGHT_BRACKET) && !isAtEnd()) {
@@ -237,7 +263,6 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
             result = std::unique_ptr<ExprNode>(new AppNode(std::move(function), std::move(args)));
         }
     } else {
-        // Fallback to hardcoded checks
         if (check(TokenType::QUOTE)) {
             result = parseQuote();
         } else if (check(TokenType::IF)) {
@@ -247,7 +272,6 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
         } else if (check(TokenType::PLAIN_APP)) {
             result = parseApp();
         } else {
-            // Implicit application
             std::vector<std::unique_ptr<ExprNode>> exprs;
             
             while (!check(TokenType::RIGHT_PAREN) && !check(TokenType::RIGHT_BRACKET) && !isAtEnd()) {
@@ -255,7 +279,7 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
             }
             
             if (exprs.empty()) {
-                error("Application requires at least a function");
+                error("Aplicacao exige pelo menos uma funcao");
             }
             
             auto function = std::move(exprs[0]);
@@ -268,35 +292,30 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseList() {
         }
     }
     
-    // Consume closing paren/bracket
     if (isSquare) {
-        consume(TokenType::RIGHT_BRACKET, "Expected ']'");
+        consume(TokenType::RIGHT_BRACKET, "Esperava ']'");
     } else {
-        consume(TokenType::RIGHT_PAREN, "Expected ')'");
+        consume(TokenType::RIGHT_PAREN, "Esperava ')'");
     }
     
     return result;
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseQuote() {
-    // (quote datum)
-    
-    consume(TokenType::QUOTE, "Expected 'quote'");
-    
+    consume(TokenType::QUOTE, "Esperava 'quote'");
+
     auto datum = parseDatum();
-    
+
     return std::unique_ptr<ExprNode>(new QuoteNode(std::move(datum)));
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseIf() {
-    // (if expr expr expr)
-    
-    consume(TokenType::IF, "Expected 'if'");
-    
-    auto condition = parseExpr();
+    consume(TokenType::IF, "Esperava 'if'");
+
+    auto condition  = parseExpr();
     auto thenBranch = parseExpr();
     auto elseBranch = parseExpr();
-    
+
     return std::unique_ptr<ExprNode>(new IfNode(
         std::move(condition),
         std::move(thenBranch),
@@ -305,73 +324,102 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseIf() {
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseBegin() {
-    // (begin expr ...+)
-    
-    consume(TokenType::BEGIN, "Expected 'begin'");
-    
+    consume(TokenType::BEGIN, "Esperava 'begin'");
+
     std::vector<std::unique_ptr<ExprNode>> expressions;
-    
-    // Parse at least one expression
+
     expressions.push_back(parseExpr());
-    
-    // Parse remaining expressions
+
     while (!check(TokenType::RIGHT_PAREN) && !check(TokenType::RIGHT_BRACKET) && !isAtEnd()) {
         expressions.push_back(parseExpr());
     }
-    
+
     return std::unique_ptr<ExprNode>(new BeginNode(std::move(expressions)));
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseApp() {
-    // (#%plain-app expr ...+)
-    
-    consume(TokenType::PLAIN_APP, "Expected '#%plain-app'");
-    
-    // Parse function
+    consume(TokenType::PLAIN_APP, "Esperava '#%plain-app'");
+
     auto function = parseExpr();
-    
-    // Parse arguments
+
     std::vector<std::unique_ptr<ExprNode>> arguments;
     while (!check(TokenType::RIGHT_PAREN) && !check(TokenType::RIGHT_BRACKET) && !isAtEnd()) {
         arguments.push_back(parseExpr());
     }
-    
+
     return std::unique_ptr<ExprNode>(new AppNode(std::move(function), std::move(arguments)));
 }
 
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseDatum() {
-    // For now, datum is just an expression
-    // In full Racket, datum can be more complex (lists, vectors, etc.)
-    // We'll handle that in future phases
-    
     return parseExpr();
 }
 
-// ============================================================================
-// Error Handling
-// ============================================================================
+// Tratamento de Erros
 
 void racket::RacketParser::error(const std::string& message) {
     throw ParseError(message, currentToken.line, currentToken.column);
 }
 
-void racket::RacketParser::synchronize() {
-    // Skip tokens until we find a likely start of a new expression
-    advance();
-    
+void racket::RacketParser::reportError(const std::string& message) {
+    errorCount++;
+    std::cerr << "\nErro sintatico [" << tokensFilename << ", linha " << currentToken.line
+              << "]: " << message << std::endl;
+    std::cerr << "  --> Iniciando recuperacao em modo panico" << std::endl;
+}
+
+bool racket::RacketParser::panicModeRecover(const std::string& nonTerminal) {
+    if (!firstFollowCalc) {
+        return false;
+    }
+    std::set<std::string> firstSet  = firstFollowCalc->getFirst(nonTerminal);
+    std::set<std::string> followSet = firstFollowCalc->getFollow(nonTerminal);
+
+    auto inFirstSet = [&]() -> bool {
+        return firstSet.count(tokenTypeToString(currentToken.type)) > 0;
+    };
+    auto inFollowSet = [&]() -> bool {
+        return followSet.count(tokenTypeToString(currentToken.type)) > 0;
+    };
+
+    if (isAtEnd()) {
+        std::cerr << "  --> Fim de entrada atingido. Analise encerrada." << std::endl;
+        return false;
+    }
+
+    if (inFollowSet()) {
+        std::cerr << "  --> Token '" << currentToken.lexeme << "' descartado." << std::endl;
+        return false;
+    }
+
+    std::cerr << "  --> Descartando tokens ate encontrar ponto de sincronizacao: ";
     while (!isAtEnd()) {
-        // If we see a left paren, we might be at the start of a new expression
-        if (check(TokenType::LEFT_PAREN) || check(TokenType::LEFT_BRACKET)) {
-            return;
+        if (inFirstSet() || inFollowSet()) break;
+        std::cerr << "'" << currentToken.lexeme << "' ";
+        advance();
+    }
+    std::cerr << std::endl;
+
+    if (isAtEnd() || inFollowSet()) {
+        std::cerr << "  --> Continuando analise a partir de '" << currentToken.lexeme << "'." << std::endl;
+        return false;
+    }
+    std::cerr << "  --> Retomando analise em '" << currentToken.lexeme << "'." << std::endl;
+    return true;
+}
+
+void racket::RacketParser::synchronize() {
+    // Salta tokens ate encontrar o inicio de uma nova expressao (FIRST(expr))
+    while (!isAtEnd()) {
+        if (useFirstFollowSets && firstFollowCalc) {
+            if (inFirst("expr")) return;
+        } else {
+            if (check(TokenType::LEFT_PAREN) || check(TokenType::LEFT_BRACKET)) return;
         }
-        
         advance();
     }
 }
 
-// ============================================================================
-// FIRST/FOLLOW Helper Methods
-// ============================================================================
+// FIRST/FOLLOW metodos auxiliares
 
 std::string racket::RacketParser::tokenTypeToString(TokenType type) const {
     switch (type) {
@@ -419,7 +467,4 @@ bool racket::RacketParser::inFollow(const std::string& nonTerminal) const {
     
     return followSet.find(currentTokenStr) != followSet.end();
 }
-
-} // namespace racket
-
-// Made with Bob
+} 

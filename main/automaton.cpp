@@ -52,11 +52,12 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 	return vector<string>(symbols.begin(), symbols.end());
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 	regularExpressionToken ret;
-	vector<string> lines = readRegexFromFile("./tests/regex.txt");
+	std::string regexFile = (argc > 1) ? argv[1] : "./tests/racket_regex.txt";
+    vector<string> lines = readRegexFromFile(regexFile);
 	if (lines.empty()) {
-		cout << "Erro ao ler input.txt" << endl;
+		cout << "Erro ao ler " << regexFile << endl;
 		return 1;
 	}
 
@@ -127,7 +128,7 @@ int main() {
 			
 			// Gerar o scanner em C
 			cout << string(80, '=') << endl;
-			cout << "GERANDO SCANNER EM C..." << endl;
+			cout << "GERANDO SCANNER..." << endl;
 			cout << string(80, '=') << endl;
 			string scannerCode = dfaUnion.generateCScanner(globalAlphabet, tokenNames);
 			

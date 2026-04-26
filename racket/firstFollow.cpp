@@ -4,23 +4,17 @@
 
 namespace racket {
 
-// ============================================================================
-// Constructor
-// ============================================================================
-
 FirstFollowCalculator::FirstFollowCalculator() {
     initializeGrammar();
 }
 
-// ============================================================================
-// Grammar Initialization
-// ============================================================================
+// Inicialização da Gramática
 
 void FirstFollowCalculator::initializeGrammar() {
-    // Define start symbol
+    // Define símbolo inicial
     startSymbol = "expr";
     
-    // Define terminals
+    // Define terminais
     terminals = {
         "IDENTIFIER", "NUMBER", "STRING", "BOOLEAN",
         "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACKET", "RIGHT_BRACKET",
@@ -29,13 +23,13 @@ void FirstFollowCalculator::initializeGrammar() {
         "EOF", "EPSILON"
     };
     
-    // Define non-terminals
+    // Define não-terminais
     nonTerminals = {
         "expr", "literal", "list", "form",
-        "quote", "if", "begin", "app", "datum"
+        "quote", "if", "begin", "begin-rest", "app", "datum"
     };
     
-    // Define productions
+    // Define produções
     // expr → literal | list
     Production exprProd("expr");
     exprProd.addAlternative({"literal"});
@@ -74,10 +68,16 @@ void FirstFollowCalculator::initializeGrammar() {
     ifProd.addAlternative({"IF", "expr", "expr", "expr"});
     grammar.push_back(ifProd);
     
-    // begin → BEGIN expr expr*
+    // begin → BEGIN expr begin-rest
     Production beginProd("begin");
-    beginProd.addAlternative({"BEGIN", "expr"});
+    beginProd.addAlternative({"BEGIN", "expr", "begin-rest"});
     grammar.push_back(beginProd);
+
+    // begin-rest → expr begin-rest | ε
+    Production beginRestProd("begin-rest");
+    beginRestProd.addAlternative({"expr", "begin-rest"});
+    beginRestProd.addAlternative({"EPSILON"});
+    grammar.push_back(beginRestProd);
     
     // app → PLAIN_APP expr expr*
     Production appProd("app");
@@ -90,9 +90,7 @@ void FirstFollowCalculator::initializeGrammar() {
     grammar.push_back(datumProd);
 }
 
-// ============================================================================
-// Helper Methods
-// ============================================================================
+// Metodos auxiliares
 
 bool FirstFollowCalculator::isTerminal(const std::string& symbol) const {
     return terminals.find(symbol) != terminals.end();
@@ -112,37 +110,35 @@ bool FirstFollowCalculator::canDeriveEpsilon(const std::string& symbol) const {
     return it->second.find("EPSILON") != it->second.end();
 }
 
-// ============================================================================
-// FIRST Calculation
-// ============================================================================
+// Cálculo do FIRST
 
 void FirstFollowCalculator::calculateFirst() {
-    // Initialize FIRST sets for terminals
+    // Inicializa os conjuntos FIRST para terminais
     for (const auto& terminal : terminals) {
         if (terminal != "EPSILON") {
             firstSets[terminal].insert(terminal);
         }
     }
     
-    // Initialize FIRST sets for non-terminals as empty
+    // Inicializa os conjuntos FIRST para não-terminais como vazios
     for (const auto& nonTerminal : nonTerminals) {
         firstSets[nonTerminal] = std::set<std::string>();
     }
     
-    // Iterate until no changes (fixed point)
+    // Itera até não haver mais mudanças (ponto fixo)
     bool changed = true;
     while (changed) {
         changed = false;
         
-        // For each production A → α
+        // Para cada produção A → α
         for (const auto& prod : grammar) {
             const std::string& A = prod.nonTerminal;
             
             for (const auto& alternative : prod.alternatives) {
-                // Calculate FIRST(α)
+                // Calcula FIRST(α)
                 auto firstAlpha = firstOfSequence(alternative);
                 
-                // Add FIRST(α) to FIRST(A)
+                // Adiciona FIRST(α) a FIRST(A)
                 size_t oldSize = firstSets[A].size();
                 firstSets[A].insert(firstAlpha.begin(), firstAlpha.end());
                 
@@ -164,26 +160,26 @@ std::set<std::string> FirstFollowCalculator::firstOfSequence(
         return result;
     }
     
-    // For each symbol in the sequence
+    // Para cada símbolo na sequência
     for (size_t i = 0; i < sequence.size(); ++i) {
         const std::string& symbol = sequence[i];
         
-        // Get FIRST(symbol)
+        // Obtém FIRST(symbol)
         auto it = firstSets.find(symbol);
         if (it != firstSets.end()) {
-            // Add FIRST(symbol) - {ε} to result
+            // Adiciona FIRST(symbol) - {ε} ao resultado
             for (const auto& terminal : it->second) {
                 if (terminal != "EPSILON") {
                     result.insert(terminal);
                 }
             }
             
-            // If symbol cannot derive ε, stop
+            // Se o símbolo não pode derivar ε, pare
             if (!canDeriveEpsilon(symbol)) {
                 return result;
             }
         } else {
-            // Symbol not found, assume it's a terminal
+            // Símbolo não encontrado, assume-se que é um terminal
             if (symbol != "EPSILON") {
                 result.insert(symbol);
             }
@@ -191,48 +187,46 @@ std::set<std::string> FirstFollowCalculator::firstOfSequence(
         }
     }
     
-    // All symbols can derive ε
+    // Todos os símbolos podem derivar ε
     result.insert("EPSILON");
     return result;
 }
 
-// ============================================================================
-// FOLLOW Calculation
-// ============================================================================
+// Cálculo do FOLLOW
 
 void FirstFollowCalculator::calculateFollow() {
-    // Initialize FOLLOW sets
+    // Inicializa os conjuntos FOLLOW
     for (const auto& nonTerminal : nonTerminals) {
         followSets[nonTerminal] = std::set<std::string>();
     }
     
-    // Rule 1: Add EOF to FOLLOW(start symbol)
+    // Regra 1: Adiciona EOF a FOLLOW(simbolo inicial)
     followSets[startSymbol].insert("EOF");
     
-    // Iterate until no changes (fixed point)
+    // Itera até não haver mais mudanças (ponto fixo)
     bool changed = true;
     while (changed) {
         changed = false;
         
-        // For each production A → α B β
+        // Para cada produção A → α B β
         for (const auto& prod : grammar) {
             const std::string& A = prod.nonTerminal;
             
             for (const auto& alternative : prod.alternatives) {
-                // For each symbol in the production
+                // Para cada símbolo na produção
                 for (size_t i = 0; i < alternative.size(); ++i) {
                     const std::string& B = alternative[i];
                     
-                    // Only process non-terminals
+                    // Apenas processa não-terminais
                     if (!isNonTerminal(B)) continue;
                     
-                    // Get β (rest of the production after B)
+                    // Obtém β (resto da produção após B)
                     std::vector<std::string> beta(
                         alternative.begin() + i + 1,
                         alternative.end()
                     );
                     
-                    // Rule 2: Add FIRST(β) - {ε} to FOLLOW(B)
+                    // Regra 2: Adiciona FIRST(β) - {ε} a FOLLOW(B)
                     auto firstBeta = firstOfSequence(beta);
                     size_t oldSize = followSets[B].size();
                     
@@ -242,7 +236,7 @@ void FirstFollowCalculator::calculateFollow() {
                         }
                     }
                     
-                    // Rule 3: If β can derive ε, add FOLLOW(A) to FOLLOW(B)
+                    // Regra 3: Se β pode derivar ε, adiciona FOLLOW(A) a FOLLOW(B)
                     if (beta.empty() || firstBeta.find("EPSILON") != firstBeta.end()) {
                         followSets[B].insert(
                             followSets[A].begin(),
@@ -259,9 +253,7 @@ void FirstFollowCalculator::calculateFollow() {
     }
 }
 
-// ============================================================================
-// Getters
-// ============================================================================
+// Metodos de get
 
 std::set<std::string> FirstFollowCalculator::getFirst(const std::string& symbol) const {
     auto it = firstSets.find(symbol);
@@ -279,13 +271,11 @@ std::set<std::string> FirstFollowCalculator::getFollow(const std::string& nonTer
     return std::set<std::string>();
 }
 
-// ============================================================================
-// Print Methods
-// ============================================================================
+// Métodos de Print
 
 void FirstFollowCalculator::printFirst() const {
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "FIRST SETS (Calculated Algorithmically)" << std::endl;
+    std::cout << "CONJUNTO FISRT" << std::endl;
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     
     for (const auto& nonTerminal : nonTerminals) {
@@ -306,7 +296,7 @@ void FirstFollowCalculator::printFirst() const {
 
 void FirstFollowCalculator::printFollow() const {
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "FOLLOW SETS (Calculated Algorithmically)" << std::endl;
+    std::cout << "CONJUNTO FOLLOW" << std::endl;
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     
     for (const auto& nonTerminal : nonTerminals) {
@@ -325,31 +315,29 @@ void FirstFollowCalculator::printFollow() const {
     std::cout << std::endl;
 }
 
-// ============================================================================
-// LL(1) Verification
-// ============================================================================
+// Verificação LL(1)
 
 bool FirstFollowCalculator::isLL1() const {
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
-    std::cout << "LL(1) VERIFICATION" << std::endl;
+    std::cout << "VERIFICACAO LL(1)" << std::endl;
     std::cout << "═══════════════════════════════════════════════════════════════" << std::endl;
     
     bool isLL1 = true;
     
-    // For each non-terminal with multiple productions
+    // Para cada não-terminal com múltiplas produções
     for (const auto& prod : grammar) {
         if (prod.alternatives.size() <= 1) continue;
         
         const std::string& A = prod.nonTerminal;
         
-        // Check if FIRST sets of alternatives are disjoint
+        // Verifica se os conjuntos FIRST das alternativas são disjuntos
         for (size_t i = 0; i < prod.alternatives.size(); ++i) {
             auto first_i = firstOfSequence(prod.alternatives[i]);
             
             for (size_t j = i + 1; j < prod.alternatives.size(); ++j) {
                 auto first_j = firstOfSequence(prod.alternatives[j]);
                 
-                // Check intersection
+                // Verifica interseção
                 std::vector<std::string> intersection;
                 std::set_intersection(
                     first_i.begin(), first_i.end(),
@@ -358,8 +346,8 @@ bool FirstFollowCalculator::isLL1() const {
                 );
                 
                 if (!intersection.empty()) {
-                    std::cout << "✗ " << A << ": FIRST sets not disjoint" << std::endl;
-                    std::cout << "  Alternative " << i << " and " << j << " share: ";
+                    std::cout << "✗ " << A << ": CONJUNTO FIRST não disjunto" << std::endl;
+                    std::cout << "  Alternativa " << i << " e " << j << " compartilham: ";
                     for (const auto& sym : intersection) {
                         std::cout << sym << " ";
                     }
@@ -371,14 +359,12 @@ bool FirstFollowCalculator::isLL1() const {
     }
     
     if (isLL1) {
-        std::cout << "✓ Grammar is LL(1)" << std::endl;
-        std::cout << "  All FIRST sets are disjoint" << std::endl;
+        std::cout << "✓ Gramatica é LL(1)" << std::endl;
+        std::cout << "  Todos os conjuntos FIRST são disjuntos" << std::endl;
     }
     
     std::cout << std::endl;
     return isLL1;
 }
 
-} // namespace racket
-
-// Made with Bob
+}

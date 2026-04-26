@@ -1,3 +1,24 @@
 (if x y z)
+(if a b c)
+(if x (if a b c) z)
+(begin a)
+(begin a b)
 (begin a b c)
+(begin (if x y z) a b)
 (quote foo)
+(quote 42)
+(quote "hello")
+(if (begin a b) x y)
+(begin (quote foo) (if a b c))
+(if x (begin a b c) (quote done))
+x
+42
+"hello"
+foo
+)
+(
+(if x y)
+(if x y z w)
+(begin)
+(quote)
+(quote foo bar)

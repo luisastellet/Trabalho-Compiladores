@@ -3,9 +3,7 @@
 
 namespace racket {
 
-// ============================================================================
-// IdNode Implementation
-// ============================================================================
+// Implementação do IdNode
 
 void IdNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -16,9 +14,7 @@ void IdNode::print(int indent) const {
     std::cout << "IdNode: " << name << std::endl;
 }
 
-// ============================================================================
-// NumberNode Implementation
-// ============================================================================
+// Implementação do NumberNode
 
 void NumberNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -29,9 +25,7 @@ void NumberNode::print(int indent) const {
     std::cout << "NumberNode: " << value << std::endl;
 }
 
-// ============================================================================
-// StringNode Implementation
-// ============================================================================
+// Implementação do StringNode
 
 void StringNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -39,12 +33,10 @@ void StringNode::accept(ASTVisitor& visitor) {
 
 void StringNode::print(int indent) const {
     printIndent(indent);
-    std::cout << "StringNode: \"" << value << "\"" << std::endl;
+    std::cout << "StringNode: " << value << std::endl;
 }
 
-// ============================================================================
-// BooleanNode Implementation
-// ============================================================================
+// Implementação do BooleanNode
 
 void BooleanNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -55,9 +47,7 @@ void BooleanNode::print(int indent) const {
     std::cout << "BooleanNode: " << (value ? "#t" : "#f") << std::endl;
 }
 
-// ============================================================================
-// QuoteNode Implementation
-// ============================================================================
+// Implementação do QuoteNode
 
 void QuoteNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -71,9 +61,7 @@ void QuoteNode::print(int indent) const {
     }
 }
 
-// ============================================================================
-// IfNode Implementation
-// ============================================================================
+// Implementação do IfNode
 
 void IfNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -102,9 +90,7 @@ void IfNode::print(int indent) const {
     }
 }
 
-// ============================================================================
-// BeginNode Implementation
-// ============================================================================
+// Implementação do BeginNode
 
 void BeginNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -112,7 +98,7 @@ void BeginNode::accept(ASTVisitor& visitor) {
 
 void BeginNode::print(int indent) const {
     printIndent(indent);
-    std::cout << "BeginNode: (" << expressions.size() << " expressions)" << std::endl;
+    std::cout << "BeginNode: (" << expressions.size() << " expressoes)" << std::endl;
     
     for (size_t i = 0; i < expressions.size(); ++i) {
         printIndent(indent + 1);
@@ -123,9 +109,7 @@ void BeginNode::print(int indent) const {
     }
 }
 
-// ============================================================================
-// AppNode Implementation
-// ============================================================================
+// Implementação do AppNode
 
 void AppNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -136,13 +120,13 @@ void AppNode::print(int indent) const {
     std::cout << "AppNode:" << std::endl;
     
     printIndent(indent + 1);
-    std::cout << "function:" << std::endl;
+    std::cout << "funcao:" << std::endl;
     if (function) {
         function->print(indent + 2);
     }
     
     printIndent(indent + 1);
-    std::cout << "arguments: (" << arguments.size() << ")" << std::endl;
+    std::cout << "argumentos: (" << arguments.size() << ")" << std::endl;
     for (size_t i = 0; i < arguments.size(); ++i) {
         printIndent(indent + 2);
         std::cout << "[" << i << "]:" << std::endl;
@@ -152,6 +136,4 @@ void AppNode::print(int indent) const {
     }
 }
 
-} // namespace racket
-
-// Made with Bob
+}

@@ -113,8 +113,6 @@ private:
     bool canDeriveEpsilon(const std::string& symbol) const;
 };
 
-} // namespace racket
+} 
 
-#endif // FIRST_FOLLOW_HPP
-
-// Made with Bob
+#endif 
