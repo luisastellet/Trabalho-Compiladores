@@ -364,7 +364,6 @@ void racket::RacketParser::reportError(const std::string& message) {
     errorCount++;
     std::cerr << "\nErro sintatico [" << tokensFilename << ", linha " << currentToken.line
               << "]: " << message << std::endl;
-    std::cerr << "  --> Iniciando recuperacao em modo panico" << std::endl;
 }
 
 bool racket::RacketParser::panicModeRecover(const std::string& nonTerminal) {
