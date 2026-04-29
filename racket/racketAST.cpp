@@ -3,7 +3,7 @@
 
 namespace racket {
 
-// Implementação do IdNode
+// IdNode
 
 void IdNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -14,7 +14,7 @@ void IdNode::print(int indent) const {
     std::cout << "IdNode: " << name << std::endl;
 }
 
-// Implementação do NumberNode
+// NumberNode
 
 void NumberNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -25,7 +25,7 @@ void NumberNode::print(int indent) const {
     std::cout << "NumberNode: " << value << std::endl;
 }
 
-// Implementação do StringNode
+// StringNode
 
 void StringNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -36,7 +36,7 @@ void StringNode::print(int indent) const {
     std::cout << "StringNode: " << value << std::endl;
 }
 
-// Implementação do BooleanNode
+// BooleanNode
 
 void BooleanNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -47,7 +47,7 @@ void BooleanNode::print(int indent) const {
     std::cout << "BooleanNode: " << (value ? "#t" : "#f") << std::endl;
 }
 
-// Implementação do QuoteNode
+// QuoteNode
 
 void QuoteNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -61,7 +61,7 @@ void QuoteNode::print(int indent) const {
     }
 }
 
-// Implementação do IfNode
+// IfNode
 
 void IfNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -90,7 +90,7 @@ void IfNode::print(int indent) const {
     }
 }
 
-// Implementação do BeginNode
+// BeginNode
 
 void BeginNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);
@@ -109,7 +109,7 @@ void BeginNode::print(int indent) const {
     }
 }
 
-// Implementação do AppNode
+// AppNode
 
 void AppNode::accept(ASTVisitor& visitor) {
     visitor.visit(*this);

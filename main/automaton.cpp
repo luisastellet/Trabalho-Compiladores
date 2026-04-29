@@ -24,7 +24,6 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 		CharacterClassNode* cc = static_cast<CharacterClassNode*>(node);
 		string charClass = cc->getCharClass();
 		
-		// Verificar se é um range
 		if (charClass.size() >= 3) {
 			size_t dashIdx = charClass.find('-');
 			if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
@@ -34,13 +33,11 @@ vector<string> getAlphabet(Node* node, set<string>& symbols) {
 					symbols.insert(string(1, c));
 				}
 			} else {
-				// Caracteres individuais
 				for (char c : charClass) {
 					symbols.insert(string(1, c));
 				}
 			}
 		} else {
-			// Caracter único
 			for (char c : charClass) {
 				symbols.insert(string(1, c));
 			}
@@ -68,13 +65,12 @@ int main(int argc, char* argv[]) {
 	for (const auto& line : lines) {
 		// Esperar formato: TOKEN_NAME: regex
 		size_t colonPos = line.find(':');
-		string tokenName = "TOKEN";  // Nome default caso não haja token especificado
-		string regexLine = line;     // A parte da regex (pode ser a linha inteira se não houver token name)
+		string tokenName = "TOKEN"; 
+		string regexLine = line;    
 		
 		if (colonPos != string::npos) {
 			tokenName = line.substr(0, colonPos);
-			regexLine = line.substr(colonPos + 1);  // A parte da regex após os dois pontos
-			// Tira o espaço extra no início da regex
+			regexLine = line.substr(colonPos + 1); 
 			if (!regexLine.empty() && regexLine[0] == ' ') {
 				regexLine = regexLine.substr(1);
 			}
@@ -124,15 +120,15 @@ int main(int argc, char* argv[]) {
 			int stateCount = 0;
 			DFA dfaUnion = DFA::unionDFAs(minimizedDFAs, globalAlphabet, stateCount);
 			cout << ">>> DFA DA UNIÃO (sem minimizar - preserva contexto dos tokens):" << endl;
-			dfaUnion.printDFA(globalAlphabet);  // Desabilitar matrix print - muito verboso
+			dfaUnion.printDFA(globalAlphabet); 
 			
-			// Gerar o scanner em C
+			// Gerar o scanner
 			cout << string(80, '=') << endl;
 			cout << "GERANDO SCANNER..." << endl;
 			cout << string(80, '=') << endl;
 			string scannerCode = dfaUnion.generateCScanner(globalAlphabet, tokenNames);
 			
-			// Salvar em arquivo
+			// Salvar num arquivo
 			ofstream scannerFile("./scanner.c");
 			if (scannerFile.is_open()) {
 				scannerFile << scannerCode;

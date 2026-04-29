@@ -5,8 +5,6 @@
 
 namespace racket {
 
-// Implementação do Token
-
 void Token::print() const {
     std::cout << "[" << line << ":" << column << "] ";
     
@@ -41,14 +39,12 @@ void Token::print() const {
     std::cout << std::endl;
 }
 
-// Implementação do RacketParser
 
 RacketParser::RacketParser(ScannerAdapter& scanner, bool useFirstFollow)
     : scanner(scanner), currentToken(TokenType::END_OF_FILE, "", 0, 0),
       firstFollowCalc(nullptr), useFirstFollowSets(useFirstFollow), errorCount(0),
       tokensFilename(scanner.getFilename()) {
     
-    // Inicializar calculadora FIRST/FOLLOW se habilitada
     if (useFirstFollowSets) {
         firstFollowCalc = new FirstFollowCalculator();
         firstFollowCalc->calculateFirst();
@@ -57,7 +53,6 @@ RacketParser::RacketParser(ScannerAdapter& scanner, bool useFirstFollow)
         std::cout << "Parser inicializado com conjuntos FIRST/FOLLOW" << std::endl;
     }
     
-    // Inicializar obtendo o primeiro token
     advance();
 }
 
@@ -93,7 +88,6 @@ std::vector<std::unique_ptr<ExprNode>> RacketParser::parseMultiple() {
     std::vector<std::unique_ptr<ExprNode>> expressions;
 
     while (!isAtEnd()) {
-        // Registra posicao antes de tentar parsear para detectar ausencia de progresso
         int lineBefore   = currentToken.line;
         int columnBefore = currentToken.column;
 
@@ -123,8 +117,6 @@ std::vector<std::unique_ptr<ExprNode>> RacketParser::parseMultiple() {
     return expressions;
 }
 
-// Gerenciamento de tokens
-
 void RacketParser::advance() {
     currentToken = scanner.nextToken();
 }
@@ -153,8 +145,6 @@ bool racket::RacketParser::isAtEnd() const {
     return check(TokenType::END_OF_FILE);
 }
 
-// Métodos de Parsing
-
 std::unique_ptr<racket::ExprNode> racket::RacketParser::parseExpr() {
     bool validStart = !(useFirstFollowSets && firstFollowCalc) || inFirst("expr");
 
@@ -164,7 +154,6 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseExpr() {
         if (!canRetry) return nullptr;
     }
 
-    // Usar conjuntos FIRST se habilitado
     if (useFirstFollowSets && firstFollowCalc) {
         if (inFirst("list")) {
             return parseList();
@@ -176,7 +165,6 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseExpr() {
         }
     }
 
-    // Verificações diretas (sem conjuntos FIRST/FOLLOW)
     if (check(TokenType::LEFT_PAREN) || check(TokenType::LEFT_BRACKET)) {
         return parseList();
     }
@@ -354,7 +342,7 @@ std::unique_ptr<racket::ExprNode> racket::RacketParser::parseDatum() {
     return parseExpr();
 }
 
-// Tratamento de Erros
+// Lidando com Erros
 
 void racket::RacketParser::error(const std::string& message) {
     throw ParseError(message, currentToken.line, currentToken.column);
@@ -407,7 +395,7 @@ bool racket::RacketParser::panicModeRecover(const std::string& nonTerminal) {
 }
 
 void racket::RacketParser::synchronize() {
-    // Salta tokens ate encontrar o inicio de uma nova expressao (FIRST(expr))
+    // Salta tokens ate encontrar o inicio de uma nova expressão (FIRST(expr))
     while (!isAtEnd()) {
         if (useFirstFollowSets && firstFollowCalc) {
             if (inFirst("expr")) return;
@@ -417,8 +405,6 @@ void racket::RacketParser::synchronize() {
         advance();
     }
 }
-
-// FIRST/FOLLOW metodos auxiliares
 
 std::string racket::RacketParser::tokenTypeToString(TokenType type) const {
     switch (type) {

@@ -7,8 +7,6 @@
 
 using namespace std;
 
-// Métodos privados
-
 set<int> NFA::delta(const set<int>& states, int epsIdx) const {
 	set<int> closure = states;
 	queue<int> queue;
@@ -28,8 +26,8 @@ set<int> NFA::delta(const set<int>& states, int epsIdx) const {
 
 NFA NFA::transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
 	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
+	int startState = n;  
+	int f = n + 1;      
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
@@ -41,15 +39,15 @@ NFA NFA::transictionKleeneStar(NFA nfaChild, vector<string>& alphabet, int& stat
 	transitions[nfaChild.end][eps].insert(nfaChild.start);
 	// Liga fim do filho para novo fim
 	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
+	stateCount = f + 1; 
 	NFA nfa = {startState, f, transitions};
 	return nfa;
 }
 
 NFA NFA::transictionPlus(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
 	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
+	int startState = n;  
+	int f = n + 1;      
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
@@ -59,15 +57,15 @@ NFA NFA::transictionPlus(NFA nfaChild, vector<string>& alphabet, int& stateCount
 	transitions[nfaChild.end][eps].insert(nfaChild.start);
 	// Liga fim do filho para novo fim
 	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
+	stateCount = f + 1; 
 	NFA nfa = {startState, f, transitions};
 	return nfa;
 }
 
 NFA NFA::transictionQuestion(NFA nfaChild, vector<string>& alphabet, int& stateCount) {
 	int n = nfaChild.transitions.size();
-	int startState = n;  // novo início é logo após o child
-	int f = n + 1;      // novo fim é logo após o novo início
+	int startState = n;  
+	int f = n + 1;      
 	vector<vector<set<int>>> transitions = nfaChild.transitions;
 	transitions.resize(n + 2, vector<set<int>>(alphabet.size() + 1));
 	int eps = alphabet.size();
@@ -77,7 +75,7 @@ NFA NFA::transictionQuestion(NFA nfaChild, vector<string>& alphabet, int& stateC
 	transitions[startState][eps].insert(f);
 	// Liga fim do filho para novo fim
 	transitions[nfaChild.end][eps].insert(f);
-	stateCount = f + 1;  // atualiza o contador global
+	stateCount = f + 1; 
 	NFA nfa = {startState, f, transitions};
 	return nfa;
 }
@@ -97,7 +95,7 @@ NFA NFA::transictionConcatenate(NFA left, NFA right, vector<string>& alphabet, i
 	int eps = alphabet.size();
 	// Liga fim do left para início do right
 	transitions[left.end][eps].insert(right.start + offset);
-	stateCount = transitions.size();  // atualiza o contador global
+	stateCount = transitions.size();  
 	NFA nfa = {left.start, right.end + offset, transitions};
 	return nfa;
 }
@@ -128,12 +126,10 @@ NFA NFA::transictionPipe(NFA left, NFA right, vector<string>& alphabet, int& sta
 	transitions[left.end + offsetL][eps].insert(f);
 	// Liga fim do right para novo fim
 	transitions[right.end + offsetR][eps].insert(f);
-	stateCount = transitions.size();  // atualiza o contador global
+	stateCount = transitions.size(); 
 	NFA nfa = {startState, f, transitions};
 	return nfa;
 }
-
-// Métodos públicos
 
 DFA NFA::toDFA(const vector<string>& alphabet) const {
 	int epsIdx = alphabet.size();
@@ -145,14 +141,11 @@ DFA NFA::toDFA(const vector<string>& alphabet) const {
 
 	// Estado inicial do DFA é o fecho-ε do estado inicial do NFA
 	set<int> startSet = delta({this->start}, epsIdx);
-	// Mapear o estado inicial para o índice 0 do DFA
 	stateMap[startSet] = dfaStateCount++;
-	// Adicionar o estado inicial à lista de estados do DFA
 	dfaStates.push_back(startSet);
-	// Inicializar a matriz de transições do DFA com -1 (indicando ausência de transição)
+	// Inicializar a matriz de transições do DFA com -1 indicando ausência de transição
 	dfaTransictions.push_back(vector<int>(alphabet.size(), -1));
 
-	// Processar os estados do DFA usando uma fila para explorar os estados alcançáveis
 	queue<set<int>> queue;
 	queue.push(startSet);
 
@@ -187,7 +180,7 @@ DFA NFA::toDFA(const vector<string>& alphabet) const {
 	dfa.start = 0;
 	dfa.finals = finals;
 	dfa.transitions = dfaTransictions;
-	dfa.alphabet = alphabet;  // ADIÇÃO: armazenar o alfabeto local
+	dfa.alphabet = alphabet; 
 	return dfa;
 }
 
@@ -228,7 +221,6 @@ NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 		
 		vector<char> chars;
 		
-		// Verificar se é um range (ex: 0-9)
 		if (charClass.size() >= 3) {
 			size_t dashIdx = charClass.find('-');
 			if (dashIdx != string::npos && dashIdx > 0 && dashIdx < charClass.size() - 1) {
@@ -238,19 +230,16 @@ NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 					chars.push_back(c);
 				}
 			} else {
-				// Caracteres individuais  (ex: abc)
 				for (char c : charClass) {
 					chars.push_back(c);
 				}
 			}
 		} else {
-			// Caracter único
 			for (char c : charClass) {
 				chars.push_back(c);
 			}
 		}
 		
-		// Adicionar transições para cada caractere
 		for (char c : chars) {
 			string charStr(1, c);
 			int idx = -1;
@@ -269,7 +258,6 @@ NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 		return nfa;
 	}
 	
-	// Operador unário
 	if (dynamic_cast<OperativeNodeUnary*>(node)) {
 		OperativeNodeUnary* u = static_cast<OperativeNodeUnary*>(node);
 		NFA nfaChild = buildNFA(u->getOperand(), alphabet, stateCount);
@@ -286,7 +274,6 @@ NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 			throw runtime_error("Operador unário desconhecido: " + node->getValue());
 		}
 	}
-	// Operador binário
 	if (dynamic_cast<OperativeNodeBinary*>(node)) {
 		OperativeNodeBinary* b = static_cast<OperativeNodeBinary*>(node);
 		NFA left = buildNFA(b->getLeftOperand(), alphabet, stateCount);
@@ -304,7 +291,6 @@ NFA NFA::buildNFA(Node* node, vector<string>& alphabet, int& stateCount) {
 	int startState = stateCount++;
 	int f = stateCount++;
 	// Inicializa a matriz de transições do NFA com conjuntos vazios
-	// O número de estados é f + 1 (de 0 a f) e o número de símbolos é alphabet.size() + 1 (incluindo ε)
 	// Cada célula transitions[i][j] é um conjunto de estados alcançáveis a partir do estado i com o símbolo j
 	vector<vector<set<int>>> transitions(f + 1, vector<set<int>>(alphabet.size() + 1));
 	int idx = -1;

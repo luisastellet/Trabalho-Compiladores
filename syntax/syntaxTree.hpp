@@ -39,7 +39,7 @@ class OperativeNodeBinary : public Node {
 };
 
 class CharacterClassNode : public Node {
-    string charClass;  // ex: "0-9", "abc"
+    string charClass; 
 
     public:
         CharacterClassNode(string c);

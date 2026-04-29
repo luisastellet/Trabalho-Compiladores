@@ -13,7 +13,6 @@ using namespace std;
 void DFA::minimize(const vector<string>& alphabet) {
 	int n = this->transitions.size();
 	
-	// Partição inicial: estados finais vs não-finais
 	vector<int> partition(n);
 	for (int i = 0; i < n; ++i) {
 		partition[i] = this->finals.count(i) ? 1 : 0;
@@ -26,15 +25,14 @@ void DFA::minimize(const vector<string>& alphabet) {
 		vector<int> newPartition(n);
 		int partNum = 0;
 		
-		// Para cada estado, criar uma assinatura baseada em: (partição atual, transições)
+		// Para cada estado, criar uma assinatura baseada em partição atual, transições
 		for (int i = 0; i < n; ++i) {
 			vector<int> sig;
-			sig.push_back(partition[i]);  // partição atual do estado
+			sig.push_back(partition[i]); 
 			
-			// Assinatura: a que partição cada transição leva
 			for (size_t j = 0; j < alphabet.size(); ++j) {
 				if (this->transitions[i][j] == -1) {
-					sig.push_back(-1);  // sem transição
+					sig.push_back(-1);  
 				} else {
 					sig.push_back(partition[this->transitions[i][j]]);
 				}
@@ -70,7 +68,7 @@ void DFA::minimize(const vector<string>& alphabet) {
 	
 	// Nova matriz de transições
 	vector<vector<int>> newTransitions(newStateNum, vector<int>(alphabet.size(), -1));
-	set<pair<int,int>> addedTransitions;  // evitar duplicatas
+	set<pair<int,int>> addedTransitions;  
 	
 	for (int i = 0; i < n; ++i) {
 		int newI = stateMap[partition[i]];
@@ -130,7 +128,7 @@ NFA DFA::toNFA(const vector<string>& alphabet) const {
 		}
 	}
 	
-	// NFA tem um único estado final (pegar o primeiro final - em caso de múltiplos, pegar qualquer um)
+	// NFA tem um único estado final
 	int endState = *this->finals.begin();
 	
 	return {this->start, endState, nfaTransitions};
@@ -145,14 +143,11 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 		return emptyDFA;
 	}
 
-	// Construir mapas de símbolos: globalIdx -> localIdx para cada DFA
-	// Isso permite mapear de um símbolo global para o índice local em cada DFA
 	vector<map<size_t, size_t>> symMapPerDfa(dfas.size());
 	
 	for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
 		const auto& localAlphabet = dfas[dfaIdx].alphabet;
 		
-		// Para cada símbolo no alfabeto global
 		for (size_t globalIdx = 0; globalIdx < alphabet.size(); ++globalIdx) {
 			// Procurar este símbolo no alfabeto local do DFA
 			for (size_t localIdx = 0; localIdx < localAlphabet.size(); ++localIdx) {
@@ -164,9 +159,8 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 		}
 	}
 
-	// Mapeamento: estado composto (vetor de estados) -> ID numérico
 	map<vector<int>, int> stateMap;
-	vector<vector<int>> reversedStateMap;  // ID numérico -> vetor de estados
+	vector<vector<int>> reversedStateMap;  
 	queue<vector<int>> toProcess;
 
 	// Estado inicial: concatenação de todos os estados iniciais
@@ -180,12 +174,11 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 	reversedStateMap.push_back(initialState);
 	toProcess.push(initialState);
 
-	int maxStates = 10000;  // limite de segurança
+	int maxStates = 10000;  
 	while (!toProcess.empty() && (int)reversedStateMap.size() < maxStates) {
 		vector<int> currentState = toProcess.front();
 		toProcess.pop();
 
-		// Para cada símbolo no alfabeto GLOBAL, calcular o próximo estado
 		for (size_t globalSymIdx = 0; globalSymIdx < alphabet.size(); ++globalSymIdx) {
 			vector<int> nextState;
 			bool validTransition = false;
@@ -195,7 +188,6 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 				int stateInDfa = currentState[dfaIdx];
 				int nextStateInDfa = -1;
 
-				// Se o símbolo existe no alfabeto local do DFA
 				if (symMapPerDfa[dfaIdx].find(globalSymIdx) != symMapPerDfa[dfaIdx].end()) {
 					size_t localSymIdx = symMapPerDfa[dfaIdx][globalSymIdx];
 					
@@ -221,7 +213,6 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 		}
 	}
 
-	// Construir o DFA unido
 	int numUnionStates = reversedStateMap.size();
 	DFA unionDfa;
 	unionDfa.start = stateMap[initialState];
@@ -236,12 +227,10 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 			vector<int> nextState;
 			bool validTransition = false;
 
-			// Aplicar transição para cada DFA individualmente
 			for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
 				int stateInDfa = currentState[dfaIdx];
 				int nextStateInDfa = -1;
 
-				// Se o símbolo existe no alfabeto local do DFA
 				if (symMapPerDfa[dfaIdx].find(globalSymIdx) != symMapPerDfa[dfaIdx].end()) {
 					size_t localSymIdx = symMapPerDfa[dfaIdx][globalSymIdx];
 					
@@ -258,7 +247,6 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 				nextState.push_back(nextStateInDfa);
 			}
 
-			// Se houver transição válida, adicionar a transição no DFA unido
 			if (validTransition && stateMap.find(nextState) != stateMap.end()) {
 				unionDfa.transitions[id][globalSymIdx] = stateMap[nextState];
 			}
@@ -266,11 +254,9 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 	}
 
 	// Determinar os estados finais: estados onde PELO MENOS UM dos DFAs está em estado final
-	// IMPORTANTE: excluir o estado inicial (que é um vetor de estados iniciais)
 	for (int id = 0; id < numUnionStates; ++id) {
 		const auto& compoundState = reversedStateMap[id];
 		
-		// Pular o estado inicial da união
 		if (id == unionDfa.start) continue;
 
 		for (size_t dfaIdx = 0; dfaIdx < dfas.size(); ++dfaIdx) {
@@ -278,9 +264,8 @@ DFA DFA::unionDFAs(const vector<DFA>& dfas, const vector<string>& alphabet, int&
 			// Se o estado está em estado final em qualquer um dos DFAs
 			if (dfas[dfaIdx].finals.count(stateInDfa)) {
 				unionDfa.finals.insert(id);
-				// Mapear o estado final para o token (ID = índice do DFA na lista)
 				unionDfa.stateToToken[id] = dfaIdx;
-				break;  // Já está marcado como final, não precisa verificar outros
+				break;  
 			}
 		}
 	}
@@ -300,8 +285,8 @@ string DFA::generateCScanner(const vector<string>& alphabet, const vector<string
 
 	// Estrutura para armazenar o resultado do scanner
 	ss << "struct Token {\n";
-	ss << "\tint type;        // ID do token (-1 = erro)\n";
-	ss << "\tchar value[256]; // Valor do token\n";
+	ss << "\tint type;\n";
+	ss << "\tchar value[256];\n";
 	ss << "};\n\n";
 
 	// Função helper: verificar se um caractere é separador

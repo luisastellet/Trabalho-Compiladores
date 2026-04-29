@@ -16,9 +16,7 @@ x
 "hello"
 foo
 )
-(
 (if x y)
 (if x y z w)
-(begin)
 (quote)
 (quote foo bar)

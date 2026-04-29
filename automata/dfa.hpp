@@ -15,8 +15,8 @@ public:
 	int start;
 	set<int> finals;
 	vector<vector<int>> transitions;
-	map<int, int> stateToToken;  // Mapeia estado final -> ID do token (para scanner)
-	vector<string> alphabet;     // Alfabeto local deste DFA
+	map<int, int> stateToToken;  
+	vector<string> alphabet;    
 
 	void minimize(const vector<string>& alphabet);
 	void printDFA(const vector<string>& alphabet) const;

@@ -5,11 +5,8 @@
 
 namespace racket {
 
-// ScannerAdapter Implementation
-
 ScannerAdapter::ScannerAdapter(const std::string& tokensFile)
     : currentIndex(0), filename(tokensFile) {
-    // Read tokens from tokens.txt file
     loadTokensFromFile(tokensFile);
 }
 
@@ -47,7 +44,6 @@ void ScannerAdapter::loadTokensFromFile(const std::string& filename) {
     while (std::getline(file, line)) {
         if (line.empty()) continue;
         
-        // Formato esperado: <tipo> <valor>
         std::istringstream iss(line);
         int type;
         std::string value;
@@ -57,10 +53,8 @@ void ScannerAdapter::loadTokensFromFile(const std::string& filename) {
             continue;
         }
         
-        // Ler resto da linha como valor (pode conter espacos)
         std::getline(iss >> std::ws, value);
         
-        // Convert type to TokenType and create token
         Token token = createTokenFromType(type, value, lineNum, 1);
         tokens.push_back(token);
         
@@ -71,9 +65,6 @@ void ScannerAdapter::loadTokensFromFile(const std::string& filename) {
 }
 
 Token ScannerAdapter::createTokenFromType(int type, const std::string& value, int line, int column) {
-    // Mapeia tipos de token do scanner para tipos do parser
-    // Baseado na saida REAL do scanner.c gerado a partir de racket_regex.txt
-    // Ordem dos tokens = ordem de definicao no arquivo de regex (0-indexado)
     TokenType tokenType;
     
     switch (type) {
@@ -93,7 +84,6 @@ Token ScannerAdapter::createTokenFromType(int type, const std::string& value, in
     
     Token token(tokenType, value, line, column);
     
-    // Definir valor numérico para números
     if (tokenType == TokenType::NUMBER) {
         try {
             token.numValue = std::stod(value);

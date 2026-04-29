@@ -9,9 +9,6 @@
 
 using namespace racket;
 
-/**
- * @brief Ler todo o arquivo para uma string
- */
 std::string readFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -23,9 +20,7 @@ std::string readFile(const std::string& filename) {
     return buffer.str();
 }
 
-/**
- * @brief Testar o lexer lendo tokens de tokens.txt
- */
+// Testar o lexer lendo tokens de tokens.txt
 void testLexer(const std::string& tokensFile) {
     std::cout << "\n- TESTE DO LEXER\n" << std::endl;
     std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
@@ -41,9 +36,6 @@ void testLexer(const std::string& tokensFile) {
     std::cout << std::endl;
 }
 
-/**
- * @brief Testar o parser lendo tokens de tokens.txt
- */
 void testParser(const std::string& tokensFile) {
     std::cout << "\n- TESTE DO PARSER\n" << std::endl;
     std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
@@ -68,9 +60,6 @@ void testParser(const std::string& tokensFile) {
     std::cout << std::endl;
 }
 
-/**
- * @brief Testar o parser lendo múltiplas expressões de tokens.txt
- */
 void testParserMultiple(const std::string& tokensFile) {
     std::cout << "\n- TESTE DO PARSER MULTIPLO\n" << std::endl;
     std::cout << "Arquivo de tokens: " << tokensFile << std::endl;
@@ -100,17 +89,11 @@ void testParserMultiple(const std::string& tokensFile) {
     std::cout << std::endl;
 }
 
-/**
- * @brief Executar REPL interativo (não suportado com o fluxo tokens.txt)
- */
 void runREPL() {
     std::cerr << "Erro: REPL interativo não suportado com o fluxo tokens.txt" << std::endl;
     std::cerr << "Use o fluxo scanner → tokens.txt → parser" << std::endl;
 }
 
-/**
- * @brief Mostrar conjuntos FIRST e FOLLOW
- */
 void showFirstFollow() {
     std::cout << "\n- ANALISE DE FIRST E FOLLOW\n" << std::endl;
     std::cout << "Calculando FIRST e FOLLOW" << std::endl;
@@ -118,21 +101,16 @@ void showFirstFollow() {
     
     FirstFollowCalculator calculator;
     
-    // Calcular conjuntos FIRST
     calculator.calculateFirst();
     calculator.printFirst();
     
-    // Calcular conjuntos FOLLOW
     calculator.calculateFollow();
     calculator.printFollow();
     
-    // Verificar LL(1)
     calculator.isLL1();
 }
 
-/**
- * @brief Imprimir informações de uso
- */
+// Imprimir informações de uso
 void printUsage(const char* programName) {
     std::cout << "Uso: " << programName << " [opções] [arquivo]" << std::endl;
     std::cout << std::endl;
@@ -150,10 +128,6 @@ void printUsage(const char* programName) {
     std::cout << "  " << programName << " -f" << std::endl;
 }
 
-/**
- * @brief Ponto de entrada principal
-
- */
 int main(int argc, char* argv[]) {
     bool lexOnly = false;
     bool parseMultiple = false;

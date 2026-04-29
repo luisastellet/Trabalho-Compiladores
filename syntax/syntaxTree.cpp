@@ -5,7 +5,6 @@
 #include <fstream>
 using namespace std;
 
-// Implementações da classe Node
 Node::Node(string c) {
     value = c;
 }
@@ -20,7 +19,6 @@ void Node::print(int indent) {
 
 Node::~Node() {}
 
-// Implementações da classe OperativeNodeUnary
 OperativeNodeUnary::OperativeNodeUnary(string c, Node* operand) : Node(c) {
     this->operand = operand;
 }
@@ -38,7 +36,6 @@ OperativeNodeUnary::~OperativeNodeUnary() {
     delete operand;
 }
 
-// Implementações da classe OperativeNodeBinary
 OperativeNodeBinary::OperativeNodeBinary(string c, Node* leftOperand, Node* rightOperand) : Node(c) {
     this->leftOperand = leftOperand;
     this->rightOperand = rightOperand;
@@ -63,7 +60,6 @@ OperativeNodeBinary::~OperativeNodeBinary() {
     delete rightOperand;
 }
 
-// Implementações da classe CharacterClassNode
 CharacterClassNode::CharacterClassNode(string c) : Node("[") {
     charClass = c;
 }
@@ -78,16 +74,13 @@ void CharacterClassNode::print(int indent) {
 
 CharacterClassNode::~CharacterClassNode() {}
 
-// Implementações da classe regularExpressionToken
 string regularExpressionToken::expandCharacterClasses(string regularExpression) {
     string result = "";
     size_t i = 0;
     while (i < regularExpression.size()) {
         if (regularExpression[i] == '[') {
-            // Encontra ]
             size_t closeIdx = regularExpression.find(']', i);
             if (closeIdx != string::npos) {
-                // Keep the entire [...]  as a single token
                 result += " ";
                 result += regularExpression.substr(i, closeIdx - i + 1);
                 result += " ";
@@ -105,7 +98,6 @@ string regularExpressionToken::expandCharacterClasses(string regularExpression) 
 }
 
 Node* regularExpressionToken::createSyntaxTree(string regularExpression){
-    // (ex: [a-Z] -> (a|b|c|...|Z))
     regularExpression = expandCharacterClasses(regularExpression);
     
     // Lógica para criar a árvore de sintaxe a partir da expressão regular
@@ -132,7 +124,6 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                         pilha.push(newNode);
                     }
                 } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
-                    // Classe de caracteres - extrai o conteúdo sem os colchetes
                     string charClass = reading.substr(1, reading.size() - 2);
                     Node* newNode = new CharacterClassNode(charClass);
                     pilha.push(newNode);
@@ -162,7 +153,6 @@ Node* regularExpressionToken::createSyntaxTree(string regularExpression){
                 pilha.push(newNode);
             }
         } else if (reading[0] == '[' && reading[reading.size()-1] == ']') {
-            // Classe de caracteres - extrai o conteúdo sem os colchetes
             string charClass = reading.substr(1, reading.size() - 2);
             Node* newNode = new CharacterClassNode(charClass);
             pilha.push(newNode);
@@ -184,11 +174,9 @@ bool regularExpressionToken::isOperator(string c) {
 }
 
 bool regularExpressionToken::IsOperatorUnary(string c) {
-    // *, + e ? são operadores unários, ou seja, só tem um operando
     return c == "*" || c == "+" || c == "?";
 }
 
-// Função de leitura do arquivo, retorna a lista de linhas do arquivo
 vector<string> readRegexFromFile(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
