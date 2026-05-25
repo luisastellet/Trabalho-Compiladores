@@ -1,6 +1,0 @@
-(define soma (lambda (a b) (+ a b)))
-(define mult_nao_usada (lambda (x y) (* x y)))
-(define z 100)
-(define w 200)
-(soma 5 3)
-z

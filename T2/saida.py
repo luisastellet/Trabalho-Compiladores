@@ -1,1 +1,3 @@
-(1 + 2)
+counter = 0
+counter = 5
+counter

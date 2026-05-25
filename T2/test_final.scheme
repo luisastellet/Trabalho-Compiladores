@@ -1,3 +1,0 @@
-(define greeting (lambda (name) (display name)))
-(define unused_var 500)
-(define result (greeting "Hello"))
