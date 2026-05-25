@@ -1,6 +1,8 @@
 %{
-#include "calc.h"
-#include "y.tab.h"
+#include "scheme.h"
+#include "sintatico.tab.h"
+
+extern int yylineno;  /* Número da linha atual (fornecido pelo Flex) */
 %}
 
 DIGITO      [0-9]
@@ -10,29 +12,43 @@ IDENTIF     ({LETRA}|{ESPECIAL})({LETRA}|{DIGITO}|{ESPECIAL})*
 
 %%
 
-[ \t\n\r]+          { /* Ignora */ }
-";".* { /* Comentário */ }
+[ \t\r]+          { /* Ignora espaços em branco */ }
+"\n"               { yylineno++; }  /* Incrementa contagem de linhas */
+";".* { /* Comentário até fim da linha */ }
 
 "("                 { return TOKEN_LPAREN; }
 ")"                 { return TOKEN_RPAREN; }
-"'"                 { return TOKEN_QUOTE; }
-"#"                 { return TOKEN_SHARP; }
+"'"                 { return TOKEN_QUOTE_KEYWORD; }
 
-\"(\\.|[^"\\])*\"   { return TOKEN_STRING; }
+\"(\\.|[^"\\])*\"   { 
+    /* Remove as aspas da string */
+    char *str = (char *)malloc(strlen(yytext) - 1);
+    strncpy(str, yytext + 1, strlen(yytext) - 2);
+    str[strlen(yytext) - 2] = '\0';
+    yylval.str = str;
+    return TOKEN_STRING_LITERAL; 
+}
 
 ("-"?{DIGITO}+("."{DIGITO}*)?) { 
-    yylval.valor_num = atof(yytext); 
+    yylval.num = atof(yytext); 
     return TOKEN_NUM; 
 }
 
 {IDENTIF}           {
     symrec *s = getsym(yytext);
-    if (s == NULL) s = putsym(yytext, TOKEN_ID);
-    yylval.ptr = s;
-    return s->type; 
+    if (s != NULL) {
+        /* Identificador já na tabela; retorna seu tipo */
+        yylval.ptr = s;
+        return s->type;
+    }
+    /* Identificador não está na tabela; retorna como TOKEN_ID genérico */
+    yylval.ptr = (symrec *)malloc(sizeof(symrec));
+    yylval.ptr->name = strdup(yytext);
+    yylval.ptr->type = TOKEN_ID;
+    return TOKEN_ID;
 }
 
-.                   { printf("Erro: %s\n", yytext); }
+.                   { fprintf(stderr, "Erro léxico: caractere não reconhecido '%s'\n", yytext); }
 
 %%
 

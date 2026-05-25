@@ -1,0 +1,5 @@
+(define nao_usada 42)
+(define x 5)
+(define nao_usado 100)
+(define y 10)
+(+ x y)

@@ -1,15 +1,22 @@
 #include <string.h>
 #include <stdlib.h>
 #include "scheme.h"
-#include "y.tab.h" // Gerado pelo Bison
+#include "sintatico.tab.h" // Gerado pelo Bison
+
+extern int yylineno;  /* Número da linha atual */
 
 symrec *sym_table = NULL;
 
 symrec *putsym(char const *name, int type) {
+    extern int yylineno;
     symrec *ptr = (symrec *) malloc(sizeof(symrec));
     ptr->name = strdup(name);
     ptr->type = type;
     ptr->value.var = 0;
+    ptr->linha_declaracao = yylineno;
+    ptr->foi_usado = 0;
+    ptr->eh_builtin = 0;  /* Por padrão, não é built-in */
+    ptr->foi_declarado = 0;  /* Por padrão, não foi declarado ainda */
     ptr->next = sym_table;
     sym_table = ptr;
     return ptr;
@@ -20,6 +27,40 @@ symrec *getsym(char const *name) {
         if (strcmp(p->name, name) == 0) return p;
     return NULL;
 }
+
+void marcar_como_usado(const char *name) {
+    symrec *s = getsym(name);
+    if (s != NULL) {
+        s->foi_usado = 1;
+    }
+}
+
+void verificar_nao_utilizados(void) {
+    fprintf(stderr, "\n");
+    int alertas = 0;
+    
+    for (symrec *p = sym_table; p != NULL; p = p->next) {
+        /* Só verifica:
+           1. Variáveis/funções do usuário (nao eh_builtin)
+           2. Que NÃO foram usadas
+           3. Que foram declaradas com define (type == TOKEN_ID e linha_declaracao > 0)
+        */
+        if (!p->eh_builtin && !p->foi_usado && p->type == TOKEN_ID && p->linha_declaracao > 0) {
+            fprintf(stderr, "AVISO: Variavel/funcao '%s' declarada na linha %d mas nunca usada\n",
+                    p->name, p->linha_declaracao);
+            alertas++;
+        }
+    }
+    
+    if (alertas > 0) {
+        fprintf(stderr, "\n%d aviso(s) de variavel/funcao nao utilizada\n", alertas);
+    }
+}
+
+void relatorio_erro_nao_declarado(const char *name, int linha) {
+    fprintf(stderr, "ERRO: Variavel/funcao '%s' nao foi declarada (usada na linha %d)\n", name, linha);
+}
+
 
 void inicializar_tabela() {
     
@@ -94,6 +135,7 @@ void inicializar_tabela() {
 
     // Este loop varre o array acima e joga tudo na mesma tabela como TOKEN_ID
     for (int i = 0; primitivas[i] != NULL; i++) {
-         putsym(primitivas[i], TOKEN_ID);
+         symrec *s = putsym(primitivas[i], TOKEN_ID);
+         s->eh_builtin = 1;  /* Marca como built-in */
     }
 }

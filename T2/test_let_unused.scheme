@@ -1,0 +1,2 @@
+(define unused_global 999)
+(let ((x 5) (y 10)) (+ x y))
