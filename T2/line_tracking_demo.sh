@@ -30,10 +30,3 @@ echo "5. Operacao valida (sem erros):"
 echo "(+ 3 5)" | ./transpilador 2>&1 | grep "ERRO"
 if [ $? -ne 0 ]; then echo "[Nenhum erro detectado - correto!]"; fi
 echo ""
-
-echo "=========================================="
-echo "Notem:"
-echo "- Emojis removidos das mensagens"
-echo "- Numero da linha reportado"
-echo "- Mensagens claras ao programador"
-echo "=========================================="

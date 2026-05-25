@@ -1,0 +1,2 @@
+(define y 10)
+(unknown_func y)

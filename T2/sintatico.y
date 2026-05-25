@@ -97,13 +97,10 @@ expressao:
         /* VERIFICAÇÃO DE CONTEXTO */
         symrec *s = getsym($1->name);
         if (s == NULL) {
-            /* Se não existe, cria uma entrada e marca como erro */
-            relatorio_erro_nao_declarado($1->name, yylineno);
-            YYERROR;
-        } else if (!s->foi_declarado && !s->eh_builtin) {
-            /* Se existe mas não foi declarado com define e não é built-in, erro */
-            relatorio_erro_nao_declarado($1->name, yylineno);
-            YYERROR;
+            /* Se não existe, cria uma entrada (pode ser parâmetro de lambda/let) */
+            s = putsym($1->name, TOKEN_ID);
+            /* Marca como não declarado inicialmente; será marcado como declarado
+               se for parâmetro de lambda/let */
         }
         marcar_como_usado($1->name);  /* Marca como usado */
         $$ = create_id($1->name);
@@ -163,6 +160,12 @@ comando_lista:
     | TOKEN_ID lista_argumentos {
         /* Aqui diferenciamos operadores especiais de chamadas de função */
         
+        /* Garante que o identificador existe na tabela de símbolos */
+        symrec *s = getsym($1->name);
+        if (s == NULL) {
+            s = putsym($1->name, TOKEN_ID);
+        }
+        
         marcar_como_usado($1->name);  /* Marca identificador como usado */
         
         /* 1. OPERADORES ARITMÉTICOS INFIXOS */
@@ -218,24 +221,68 @@ comando_lista:
     /* --- LAMBDA --- */
     | TOKEN_LAMBDA TOKEN_LPAREN lista_argumentos TOKEN_RPAREN expressao {
         /* (lambda (x y z) corpo) */
+        /* Marca parâmetros como declarados */
+        ast_node_list *param = $3;
+        while (param != NULL) {
+            if (param->node->type == NODE_ID) {
+                symrec *s = getsym(param->node->data.id.nome);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            param = param->next;
+        }
         $$ = create_lambda($3, $5);
     }
     
     /* --- LET --- */
     | TOKEN_LET TOKEN_LPAREN binding_list TOKEN_RPAREN expressao {
         /* (let ((x 1) (y 2)) corpo) */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = $3;
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         $$ = create_let($3, $5);
     }
     
     /* --- LET* --- */
     | TOKEN_LET_STAR TOKEN_LPAREN binding_list TOKEN_RPAREN expressao {
         /* (let* ((x 1) (y 2)) corpo) - similar ao let por enquanto */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = $3;
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         $$ = create_let($3, $5);
     }
     
     /* --- LETREC --- */
     | TOKEN_LETREC TOKEN_LPAREN binding_list TOKEN_RPAREN expressao {
         /* (letrec ((x 1) (y 2)) corpo) - similar ao let por enquanto */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = $3;
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         $$ = create_let($3, $5);
     }
     
@@ -339,7 +386,22 @@ int main() {
     
     if (result == 0) {
         printf("Arquivo 'saida.py' gerado com sucesso!\n");
-        verificar_nao_utilizados();  /* Verifica e reporta variáveis/funções não usadas */
+        
+        /* Verifica se variáveis foram usadas mas não foram declaradas com define */
+        int erros = 0;
+        for (symrec *p = sym_table; p != NULL; p = p->next) {
+            if (!p->eh_builtin && p->foi_usado && !p->foi_declarado && p->type == TOKEN_ID) {
+                relatorio_erro_nao_declarado(p->name, p->linha_declaracao);
+                erros++;
+            }
+        }
+        
+        if (erros > 0) {
+            result = 1;  /* Marca como erro para não gerar saída */
+            printf("Erro na compilacao\n");
+        } else {
+            verificar_nao_utilizados();  /* Verifica e reporta variáveis/funções não usadas */
+        }
     } else {
         printf("Erro na compilação\n");
     }

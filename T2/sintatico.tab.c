@@ -497,10 +497,10 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    61,    61,    73,    89,    92,    96,   111,   119,   126,
-     131,   139,   148,   153,   158,   163,   219,   225,   231,   237,
-     243,   249,   260,   272,   275,   278,   285,   289,   298,   301,
-     304,   311,   314,   317
+       0,    61,    61,    73,    89,    92,    96,   108,   116,   123,
+     128,   136,   145,   150,   155,   160,   222,   239,   256,   273,
+     290,   296,   307,   319,   322,   325,   332,   336,   345,   348,
+     351,   358,   361,   364
 };
 #endif
 
@@ -1540,13 +1540,10 @@ yyreduce:
         /* VERIFICAÇÃO DE CONTEXTO */
         symrec *s = getsym((yyvsp[(1) - (1)].ptr)->name);
         if (s == NULL) {
-            /* Se não existe, cria uma entrada e marca como erro */
-            relatorio_erro_nao_declarado((yyvsp[(1) - (1)].ptr)->name, yylineno);
-            YYERROR;
-        } else if (!s->foi_declarado && !s->eh_builtin) {
-            /* Se existe mas não foi declarado com define e não é built-in, erro */
-            relatorio_erro_nao_declarado((yyvsp[(1) - (1)].ptr)->name, yylineno);
-            YYERROR;
+            /* Se não existe, cria uma entrada (pode ser parâmetro de lambda/let) */
+            s = putsym((yyvsp[(1) - (1)].ptr)->name, TOKEN_ID);
+            /* Marca como não declarado inicialmente; será marcado como declarado
+               se for parâmetro de lambda/let */
         }
         marcar_como_usado((yyvsp[(1) - (1)].ptr)->name);  /* Marca como usado */
         (yyval.node) = create_id((yyvsp[(1) - (1)].ptr)->name);
@@ -1554,14 +1551,14 @@ yyreduce:
     break;
 
   case 7:
-#line 111 "sintatico.y"
+#line 108 "sintatico.y"
     {
         (yyval.node) = (yyvsp[(2) - (3)].node);
     ;}
     break;
 
   case 8:
-#line 119 "sintatico.y"
+#line 116 "sintatico.y"
     {
         symrec *s = putsym((yyvsp[(2) - (3)].ptr)->name, TOKEN_ID); // Registra no contexto
         s->foi_declarado = 1;  /* Marca como declarado */
@@ -1570,14 +1567,14 @@ yyreduce:
     break;
 
   case 9:
-#line 126 "sintatico.y"
+#line 123 "sintatico.y"
     {
         (yyval.node) = create_if((yyvsp[(2) - (4)].node), (yyvsp[(3) - (4)].node), (yyvsp[(4) - (4)].node));
     ;}
     break;
 
   case 10:
-#line 131 "sintatico.y"
+#line 128 "sintatico.y"
     {
         /* (and a b c) -> (a and b and c) em Python */
         char *codigo = codegen_args((yyvsp[(2) - (2)].args), " and ");
@@ -1588,7 +1585,7 @@ yyreduce:
     break;
 
   case 11:
-#line 139 "sintatico.y"
+#line 136 "sintatico.y"
     {
         /* (or a b c) -> (a or b or c) em Python */
         char *codigo = codegen_args((yyvsp[(2) - (2)].args), " or ");
@@ -1599,30 +1596,36 @@ yyreduce:
     break;
 
   case 12:
-#line 148 "sintatico.y"
+#line 145 "sintatico.y"
     {
         (yyval.node) = create_begin((yyvsp[(2) - (2)].args));
     ;}
     break;
 
   case 13:
-#line 153 "sintatico.y"
+#line 150 "sintatico.y"
     {
         (yyval.node) = create_set((yyvsp[(2) - (3)].ptr)->name, (yyvsp[(3) - (3)].node));
     ;}
     break;
 
   case 14:
-#line 158 "sintatico.y"
+#line 155 "sintatico.y"
     {
         (yyval.node) = create_quote((yyvsp[(2) - (2)].node));
     ;}
     break;
 
   case 15:
-#line 163 "sintatico.y"
+#line 160 "sintatico.y"
     {
         /* Aqui diferenciamos operadores especiais de chamadas de função */
+        
+        /* Garante que o identificador existe na tabela de símbolos */
+        symrec *s = getsym((yyvsp[(1) - (2)].ptr)->name);
+        if (s == NULL) {
+            s = putsym((yyvsp[(1) - (2)].ptr)->name, TOKEN_ID);
+        }
         
         marcar_como_usado((yyvsp[(1) - (2)].ptr)->name);  /* Marca identificador como usado */
         
@@ -1678,39 +1681,83 @@ yyreduce:
     break;
 
   case 16:
-#line 219 "sintatico.y"
+#line 222 "sintatico.y"
     {
         /* (lambda (x y z) corpo) */
+        /* Marca parâmetros como declarados */
+        ast_node_list *param = (yyvsp[(3) - (5)].args);
+        while (param != NULL) {
+            if (param->node->type == NODE_ID) {
+                symrec *s = getsym(param->node->data.id.nome);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            param = param->next;
+        }
         (yyval.node) = create_lambda((yyvsp[(3) - (5)].args), (yyvsp[(5) - (5)].node));
     ;}
     break;
 
   case 17:
-#line 225 "sintatico.y"
+#line 239 "sintatico.y"
     {
         /* (let ((x 1) (y 2)) corpo) */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = (yyvsp[(3) - (5)].args);
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         (yyval.node) = create_let((yyvsp[(3) - (5)].args), (yyvsp[(5) - (5)].node));
     ;}
     break;
 
   case 18:
-#line 231 "sintatico.y"
+#line 256 "sintatico.y"
     {
         /* (let* ((x 1) (y 2)) corpo) - similar ao let por enquanto */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = (yyvsp[(3) - (5)].args);
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         (yyval.node) = create_let((yyvsp[(3) - (5)].args), (yyvsp[(5) - (5)].node));
     ;}
     break;
 
   case 19:
-#line 237 "sintatico.y"
+#line 273 "sintatico.y"
     {
         /* (letrec ((x 1) (y 2)) corpo) - similar ao let por enquanto */
+        /* Marca variáveis de binding como declaradas */
+        ast_node_list *binding = (yyvsp[(3) - (5)].args);
+        while (binding != NULL) {
+            if (binding->node->type == NODE_DEFINE) {
+                symrec *s = getsym(binding->node->data.define.variavel);
+                if (s != NULL) {
+                    s->foi_declarado = 1;
+                }
+            }
+            binding = binding->next;
+        }
         (yyval.node) = create_let((yyvsp[(3) - (5)].args), (yyvsp[(5) - (5)].node));
     ;}
     break;
 
   case 20:
-#line 243 "sintatico.y"
+#line 290 "sintatico.y"
     {
         /* (cond (teste1 expr1) (teste2 expr2) (else expr3)) */
         (yyval.node) = create_cond((yyvsp[(2) - (2)].args));
@@ -1718,7 +1765,7 @@ yyreduce:
     break;
 
   case 21:
-#line 249 "sintatico.y"
+#line 296 "sintatico.y"
     {
         /* (case expr (valor1 expr1) (valor2 expr2) ...) */
         /* TODO: Implementar pattern matching baseado em $2 */
@@ -1728,7 +1775,7 @@ yyreduce:
     break;
 
   case 22:
-#line 260 "sintatico.y"
+#line 307 "sintatico.y"
     {
         /* Cria um "pseudo-nó" que representa a binding
            Usando NODE_LET como container (não é o melhor, mas funciona)
@@ -1740,28 +1787,28 @@ yyreduce:
     break;
 
   case 23:
-#line 272 "sintatico.y"
+#line 319 "sintatico.y"
     {
         (yyval.args) = NULL;
     ;}
     break;
 
   case 24:
-#line 275 "sintatico.y"
+#line 322 "sintatico.y"
     {
         (yyval.args) = create_arg_node((yyvsp[(1) - (1)].node));
     ;}
     break;
 
   case 25:
-#line 278 "sintatico.y"
+#line 325 "sintatico.y"
     {
         (yyval.args) = append_arg_node((yyvsp[(1) - (2)].args), (yyvsp[(2) - (2)].node));
     ;}
     break;
 
   case 26:
-#line 285 "sintatico.y"
+#line 332 "sintatico.y"
     {
         /* (teste resultado) */
         (yyval.node) = create_cond_clause((yyvsp[(2) - (4)].node), (yyvsp[(3) - (4)].node));
@@ -1769,7 +1816,7 @@ yyreduce:
     break;
 
   case 27:
-#line 289 "sintatico.y"
+#line 336 "sintatico.y"
     {
         /* (else resultado) - cria teste com valor "else" */
         ast_node *teste = create_id("else");
@@ -1778,42 +1825,42 @@ yyreduce:
     break;
 
   case 28:
-#line 298 "sintatico.y"
+#line 345 "sintatico.y"
     {
         (yyval.args) = NULL;
     ;}
     break;
 
   case 29:
-#line 301 "sintatico.y"
+#line 348 "sintatico.y"
     {
         (yyval.args) = create_arg_node((yyvsp[(1) - (1)].node));
     ;}
     break;
 
   case 30:
-#line 304 "sintatico.y"
+#line 351 "sintatico.y"
     {
         (yyval.args) = append_arg_node((yyvsp[(1) - (2)].args), (yyvsp[(2) - (2)].node));
     ;}
     break;
 
   case 31:
-#line 311 "sintatico.y"
+#line 358 "sintatico.y"
     {
         (yyval.args) = NULL;
     ;}
     break;
 
   case 32:
-#line 314 "sintatico.y"
+#line 361 "sintatico.y"
     {
         (yyval.args) = create_arg_node((yyvsp[(1) - (1)].node));
     ;}
     break;
 
   case 33:
-#line 317 "sintatico.y"
+#line 364 "sintatico.y"
     {
         (yyval.args) = append_arg_node((yyvsp[(1) - (2)].args), (yyvsp[(2) - (2)].node));
     ;}
@@ -1821,7 +1868,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1825 "sintatico.tab.c"
+#line 1872 "sintatico.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2035,7 +2082,7 @@ yyreturn:
 }
 
 
-#line 322 "sintatico.y"
+#line 369 "sintatico.y"
 
 
 void yyerror(char const *s) {
@@ -2056,7 +2103,22 @@ int main() {
     
     if (result == 0) {
         printf("Arquivo 'saida.py' gerado com sucesso!\n");
-        verificar_nao_utilizados();  /* Verifica e reporta variáveis/funções não usadas */
+        
+        /* Verifica se variáveis foram usadas mas não foram declaradas com define */
+        int erros = 0;
+        for (symrec *p = sym_table; p != NULL; p = p->next) {
+            if (!p->eh_builtin && p->foi_usado && !p->foi_declarado && p->type == TOKEN_ID) {
+                relatorio_erro_nao_declarado(p->name, p->linha_declaracao);
+                erros++;
+            }
+        }
+        
+        if (erros > 0) {
+            result = 1;  /* Marca como erro para não gerar saída */
+            printf("Erro na compilacao\n");
+        } else {
+            verificar_nao_utilizados();  /* Verifica e reporta variáveis/funções não usadas */
+        }
     } else {
         printf("Erro na compilação\n");
     }
