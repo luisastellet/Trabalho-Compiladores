@@ -429,12 +429,18 @@ char *codegen(ast_node *node) {
         
         case NODE_LET: {
             /* (let ((x 1) (y 2)) corpo) 
-               Tradução para Python: usando função anônima imediata (lambda)
-               (lambda x, y: corpo)(1, 2)
-               
+               (let* ((x 1) (y (+ x 1))) corpo)
                (letrec ((f (lambda ...))) corpo)
-               Tradução para Python: usando 'def' para permitir recursão
-               def f(...): ... ; corpo
+               
+               Estratégia simplificada: SEMPRE usar def para lambdas e assignments para valores
+               - Para lambdas: def f(...): return ...
+               - Para valores: x = ...
+               - Depois executar: corpo
+               
+               Isso resolve:
+               1. Recursão em letrec (def permite self-reference)
+               2. Escopo sequencial em let* (assignments são sequenciais)
+               3. Consistência em let (mesmo tratamento)
             */
             if (node->data.let_node.bindings == NULL) {
                 char *corpo = codegen(node->data.let_node.corpo);
@@ -442,105 +448,61 @@ char *codegen(ast_node *node) {
                 break;
             }
             
-            /* Verificar se é letrec com lambda recursivo */
-            int is_letrec = node->data.let_node.is_letrec;
+            /* Gera statements (assignments e defs) para todas as bindings */
+            char statements[4096];
+            statements[0] = '\0';
             
-            if (is_letrec) {
-                /* LETREC: gera 'def' statements */
-                char defs[2048];
-                defs[0] = '\0';
-                
-                ast_node_list *binding = node->data.let_node.bindings;
-                while (binding != NULL && binding->node != NULL) {
-                    if (binding->node->type == NODE_DEFINE) {
-                        char *var_sanitized = sanitize_identifier(binding->node->data.define.variavel);
+            ast_node_list *binding = node->data.let_node.bindings;
+            while (binding != NULL && binding->node != NULL) {
+                if (binding->node->type == NODE_DEFINE) {
+                    char *var_sanitized = sanitize_identifier(binding->node->data.define.variavel);
+                    
+                    /* Se o valor é um lambda, converte para def */
+                    if (binding->node->data.define.valor && 
+                        binding->node->data.define.valor->type == NODE_LAMBDA) {
                         
-                        /* Se o valor é um lambda, converte para def */
-                        if (binding->node->data.define.valor && 
-                            binding->node->data.define.valor->type == NODE_LAMBDA) {
-                            
-                            ast_node *lambda_node = binding->node->data.define.valor;
-                            char *params = codegen_args(lambda_node->data.lambda.parametros, ", ");
-                            char *corpo_lambda = codegen(lambda_node->data.lambda.corpo);
-                            
-                            char def_line[1024];
-                            snprintf(def_line, sizeof(def_line), "def %s(%s):\n    return %s\n",
-                                     var_sanitized, params, corpo_lambda);
-                            strcat(defs, def_line);
-                            
-                            free(params);
-                            free(corpo_lambda);
-                        } else {
-                            /* Caso não-lambda, trata como atribuição normal */
-                            char *valor_code = codegen(binding->node->data.define.valor);
-                            char assign_line[512];
-                            snprintf(assign_line, sizeof(assign_line), "%s = %s\n",
-                                     var_sanitized, valor_code);
-                            strcat(defs, assign_line);
-                            free(valor_code);
-                        }
+                        ast_node *lambda_node = binding->node->data.define.valor;
+                        char *params = codegen_args(lambda_node->data.lambda.parametros, ", ");
+                        char *corpo_lambda = codegen(lambda_node->data.lambda.corpo);
                         
-                        free(var_sanitized);
-                    }
-                    binding = binding->next;
-                }
-                
-                /* Gera o corpo (última expressão) */
-                char *corpo_expr = codegen(node->data.let_node.corpo);
-                
-                result = malloc(strlen(defs) + strlen(corpo_expr) + 10);
-                sprintf(result, "%s%s", defs, corpo_expr);
-                free(corpo_expr);
-                
-            } else {
-                /* LET: gera lambda function */
-                /* Extrai nomes e valores das bindings */
-                char nomes[1024];
-                char valores[1024];
-                nomes[0] = '\0';
-                valores[0] = '\0';
-                
-                ast_node_list *binding = node->data.let_node.bindings;
-                int primeira = 1;
-                
-                while (binding != NULL && binding->node != NULL) {
-                    /* Cada binding é um nó NODE_DEFINE que contém (variavel, valor) */
-                    if (binding->node->type == NODE_DEFINE) {
-                        if (!primeira) {
-                            strcat(nomes, ", ");
-                            strcat(valores, ", ");
-                        }
-                        primeira = 0;
+                        char def_line[1024];
+                        snprintf(def_line, sizeof(def_line), "def %s(%s):\n    return %s\n",
+                                 var_sanitized, params, corpo_lambda);
+                        strcat(statements, def_line);
                         
-                        char *var_sanitized = sanitize_identifier(binding->node->data.define.variavel);
-                        strcat(nomes, var_sanitized);
-                        free(var_sanitized);
-                        
+                        free(params);
+                        free(corpo_lambda);
+                    } else {
+                        /* Caso não-lambda, trata como atribuição normal */
                         char *valor_code = codegen(binding->node->data.define.valor);
-                        strcat(valores, valor_code);
+                        char assign_line[512];
+                        snprintf(assign_line, sizeof(assign_line), "%s = %s\n",
+                                 var_sanitized, valor_code);
+                        strcat(statements, assign_line);
                         free(valor_code);
                     }
-                    binding = binding->next;
+                    
+                    free(var_sanitized);
                 }
-                
-                char *corpo = codegen(node->data.let_node.corpo);
-                
-                /* Se o corpo é um NODE_DEFINE, extrai apenas a expressão (sem a atribuição) */
-                char *corpo_expr = corpo;
-                if (node->data.let_node.corpo && node->data.let_node.corpo->type == NODE_DEFINE) {
-                    /* NODE_DEFINE gera "var = expr", mas dentro de lambda precisamos apenas "expr" */
-                    char *valor_define = codegen(node->data.let_node.corpo->data.define.valor);
-                    free(corpo);
-                    corpo_expr = valor_define;
-                }
-                
-                /* Gera: (lambda nome1, nome2: corpo)(valor1, valor2) */
-                if (strlen(nomes) > 0 && strlen(valores) > 0) {
-                    result = malloc(strlen(nomes) + strlen(valores) + strlen(corpo_expr) + 30);
-                    sprintf(result, "(lambda %s: %s)(%s)", nomes, corpo_expr, valores);
-                } else {
-                    result = corpo_expr;
-                }
+                binding = binding->next;
+            }
+            
+            /* Gera o corpo (última expressão) */
+            char *corpo_expr = codegen(node->data.let_node.corpo);
+            
+            /* Se o corpo é um NODE_DEFINE, extrai apenas a expressão */
+            if (node->data.let_node.corpo && node->data.let_node.corpo->type == NODE_DEFINE) {
+                char *valor_define = codegen(node->data.let_node.corpo->data.define.valor);
+                free(corpo_expr);
+                corpo_expr = valor_define;
+            }
+            
+            /* Combina: statements + corpo */
+            if (strlen(statements) > 0) {
+                result = malloc(strlen(statements) + strlen(corpo_expr) + 10);
+                sprintf(result, "%s%s", statements, corpo_expr);
+            } else {
+                result = corpo_expr;
             }
             
             break;
