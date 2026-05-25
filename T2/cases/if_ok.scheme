@@ -1,0 +1,10 @@
+; Teste: If com todas as variáveis declaradas (deve compilar)
+; Esperado: Arquivo saida.py gerado com sucesso
+
+(define x 10)
+(define y 5)
+
+(define result
+  (if (> x y)
+    (+ x y)
+    (- x y)))

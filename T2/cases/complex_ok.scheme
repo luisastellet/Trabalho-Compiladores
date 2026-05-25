@@ -1,0 +1,20 @@
+; Teste: Código complexo com múltiplas definições (deve compilar)
+; Esperado: Arquivo saida.py gerado com sucesso
+; Combina define, lambda, let, if, operadores
+
+(define square
+  (lambda (x)
+    (* x x)))
+
+(define apply-op
+  (lambda (op a b)
+    (cond ((= op 1) (+ a b))
+          ((= op 2) (- a b))
+          ((= op 3) (* a b))
+          (else 0))))
+
+(define combined-result
+  (let ((n1 10)
+        (n2 20))
+    (+ (square n1)
+       (apply-op 1 n1 n2))))

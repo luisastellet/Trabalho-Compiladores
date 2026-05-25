@@ -1,0 +1,11 @@
+; Teste: Let com múltiplos bindings (deve compilar com sucesso)
+; Esperado: Arquivo saida.py gerado com sucesso
+; As variáveis x, y, z são declaradas no escopo do let
+
+(define outer-var 1000)
+
+(let ((x 10)
+      (y 20)
+      (z 30))
+  (define inner-result
+    (+ x y z outer-var)))

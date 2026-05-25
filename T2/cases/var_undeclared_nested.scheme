@@ -1,0 +1,9 @@
+; Teste: Variável não declarada em função aninhada
+; Esperado: ERRO - variável 'undefined_var' não declarada na linha 9
+
+(define calculate
+  (lambda (a b)
+    (+ a b)))
+
+(define result1 (calculate 5 10))
+(define result2 (calculate undefined_var 20))

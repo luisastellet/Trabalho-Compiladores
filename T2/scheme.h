@@ -31,7 +31,8 @@ symrec *putsym(char const *name, int type);     /* Função para inserir um novo
 symrec *getsym(char const *name);               /* Função para buscar se um símbolo existe */
 void inicializar_tabela();                      /* Função para inicializar a tabela de símbolos */
 void marcar_como_usado(const char *name);       /* Marca símbolo como usado */
-void verificar_nao_utilizados(void);            /* Verifica e reporta variáveis/funções não utilizadas */void relatorio_erro_nao_declarado(const char *name, int linha);  /* Reporta erro de variável não declarada */
+void verificar_nao_utilizados(void);            /* Verifica e reporta variáveis/funções não utilizadas */
+void relatorio_erro_nao_declarado(const char *name, int linha);  /* Reporta erro de variável não declarada */
 /* ============================================================================
    PARTE 2: TIPOS DE VALOR (para verificação semântica)
    ============================================================================ */

@@ -1,4 +1,0 @@
-- verificação de tipos em tempo de compilação
-- verificação de variável já declarada
-- verificação de função "declarada" mas não usada, para isso, colcoar booleana de usado na struct da tabela
-- gerar entrada muito grande, quero 10 nessa porra

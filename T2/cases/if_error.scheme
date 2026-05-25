@@ -1,0 +1,7 @@
+; Teste: If com variável não declarada (deve falhar)
+; Esperado: ERRO - variável 'condition_var' não declarada na linha 5
+
+(define x 10)
+(if (> condition_var 0)
+    (+ x 5)
+    (- x 3))

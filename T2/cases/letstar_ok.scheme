@@ -1,0 +1,8 @@
+; Teste: Let-star com referências entre bindings (deve compilar)
+; Esperado: Arquivo saida.py gerado com sucesso
+; Em let*, cada binding pode referenciar bindings anteriores
+
+(let* ((x 5)
+       (y (+ x 10))
+       (z (+ x y)))
+  (+ x y z))

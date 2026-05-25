@@ -1,0 +1,12 @@
+; Teste: Cond com múltiplas cláusulas (deve compilar)
+; Esperado: Arquivo saida.py gerado com sucesso
+
+(define grade 85)
+
+(define classification
+  (cond
+    ((>= grade 90) "A")
+    ((>= grade 80) "B")
+    ((>= grade 70) "C")
+    ((>= grade 60) "D")
+    (else "F")))

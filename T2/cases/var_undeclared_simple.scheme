@@ -1,0 +1,5 @@
+; Teste: Variável não declarada em expressão simples
+; Esperado: ERRO na linha 4 - variável 'x' não foi declarada
+
+(define y 10)
+(+ y x)

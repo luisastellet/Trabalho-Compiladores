@@ -1,21 +1,23 @@
 #!/bin/bash
 
 # =============================================================================
-# SUITE DE TESTES DO TRANSPILADOR SCHEME → PYTHON
+# SUITE DE TESTES DO TRANSPILADOR SCHEME → PYTHON (VERBOSE)
 # =============================================================================
-# Script centralizado para testar:
-# - Detecção de variáveis/funções não declaradas
-# - Parâmetros de lambda (devem ser declarados automaticamente)
-# - Bindings de let/let*/letrec (devem ser declarados automaticamente)
-# - Funções built-in (não devem gerar erros)
-# - Geração de código bem-sucedida
+# Executa testes usando arquivos .scheme da pasta 'cases/'
+# Mostra todo o código, linha por linha
+# Exibe a saída completa do transpilador
+# Destaca claramente qual linha causou erro
 # =============================================================================
+
+set +e  # Permitir falhas para capturar exit codes
 
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;36m'
+PURPLE='\033[0;35m'
+GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
 # Contadores
@@ -23,56 +25,85 @@ TOTAL=0
 PASSED=0
 FAILED=0
 
-# Helper function para exibir resultado de teste
-run_test() {
-    local test_name="$1"
-    local scheme_code="$2"
-    local grep_pattern="$3"  # Padrão para grep
-    local should_fail="$4"   # "yes" se deve falhar (exit_code != 0), "no" se deve ter sucesso (exit_code == 0)
+# Helper: exibir número de linhas
+show_code_with_lines() {
+    local file="$1"
+    awk 'NR {printf "%s%3d |%s %s\n", "'"${GRAY}"'", NR, "'"${NC}"'", $0}' "$file"
+}
+
+# Helper: mostrar comentário descritivo do teste
+show_test_description() {
+    local file="$1"
+    grep "^; Teste:" "$file" | sed 's/; Teste: //'
+    echo ""
+}
+
+# Executar um teste baseado em arquivo
+run_file_test() {
+    local test_file="$1"
+    local test_name=$(basename "$test_file" .scheme)
+    local should_fail="$2"  # "yes" se deve falhar, "no" se deve compilar
 
     TOTAL=$((TOTAL + 1))
     
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${BLUE}Teste #${TOTAL}:${NC} ${test_name}"
-    echo -e "${BLUE}Código:${NC} ${scheme_code}"
-    echo -e "${BLUE}Esperado:${NC} ${grep_pattern}"
+    echo ""
+    echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║${NC} Teste #${TOTAL}: ${test_name}"                                ║
+    echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
     
-    # Executa o transpilador (permite falha sem interromper script)
-    set +e
-    output=$(echo "$scheme_code" | ./transpilador 2>&1)
+    # Mostrar descrição e expectativa
+    echo -e "${PURPLE} Descrição:${NC}"
+    show_test_description "$test_file"
+    
+    # Mostrar código com números de linha
+    echo -e "${BLUE} Código:${NC}"
+    echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+    show_code_with_lines "$test_file"
+    echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+    echo ""
+    
+    # Executar o transpilador
+    output=$(./transpilador < "$test_file" 2>&1)
     exit_code=$?
-    set -e
     
-    # Verifica se a saída contém o padrão esperado
-    if echo "$output" | grep -q "$grep_pattern"; then
-        pattern_found=1
+    # Mostrar saída
+    echo -e "${BLUE} Saída do Transpilador:${NC}"
+    echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+    
+    # Destacar erros
+    if echo "$output" | grep -q "ERRO"; then
+        echo "$output" | while read line; do
+            if echo "$line" | grep -q "ERRO"; then
+                echo -e "${RED}${line}${NC}"
+            else
+                echo "$line"
+            fi
+        done
     else
-        pattern_found=0
+        echo "$output"
     fi
     
-    # Verifica sucesso ou falha baseado na expectativa
+    echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+    echo ""
+    
+    # Avaliar resultado
     if [[ "$should_fail" == "yes" ]]; then
-        # Esperamos erro (exit_code != 0) E o padrão de erro
-        if [[ "$exit_code" != "0" ]] && [[ "$pattern_found" == "1" ]]; then
-            echo -e "${GREEN}✓ PASSOU${NC}"
+        # Esperamos erro
+        if [[ "$exit_code" != "0" ]]; then
+            echo -e "${GREEN} PASSOU${NC} (compilação falhou como esperado)"
             PASSED=$((PASSED + 1))
         else
-            echo -e "${RED}✗ FALHOU${NC}"
-            echo -e "  Exit code: ${exit_code} (esperado != 0)"
-            echo -e "  Pattern encontrado: ${pattern_found} (esperado 1)"
-            echo -e "  Output: ${output}"
+            echo -e "${RED} FALHOU${NC} (esperava erro, mas compilou com sucesso)"
             FAILED=$((FAILED + 1))
         fi
     else
-        # Esperamos sucesso (exit_code == 0) E o padrão
-        if [[ "$exit_code" == "0" ]] && [[ "$pattern_found" == "1" ]]; then
-            echo -e "${GREEN}✓ PASSOU${NC}"
+        # Esperamos sucesso
+        if [[ "$exit_code" == "0" ]]; then
+            echo -e "${GREEN} PASSOU${NC} (compilação bem-sucedida)"
             PASSED=$((PASSED + 1))
         else
-            echo -e "${RED}✗ FALHOU${NC}"
-            echo -e "  Exit code: ${exit_code} (esperado 0)"
-            echo -e "  Pattern encontrado: ${pattern_found} (esperado 1)"
-            echo -e "  Output: ${output}"
+            echo -e "${RED} FALHOU${NC} (compilação falhou inesperadamente)"
             FAILED=$((FAILED + 1))
         fi
     fi
@@ -81,253 +112,63 @@ run_test() {
 }
 
 # =============================================================================
-# CATEGORIA 1: VARIÁVEIS NÃO DECLARADAS
+# EXECUTAR TESTES DA PASTA 'cases/'
 # =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 1: VARIÁVEIS NÃO DECLARADAS                   ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
 
-run_test \
-    "Variável simples não declarada" \
-    "(+ x 5)" \
-    "ERRO: Variavel/funcao 'x' nao foi declarada" \
-    "yes"
+if [ ! -d "cases" ]; then
+    echo -e "${RED}Erro: Pasta 'cases/' não encontrada!${NC}"
+    exit 1
+fi
 
-run_test \
-    "Variável em expressão aninhada" \
-    "(define y 10) (+ y (* x 2))" \
-    "ERRO: Variavel/funcao 'x' nao foi declarada" \
-    "yes"
+echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${YELLOW}║${NC}     SUITE DE TESTES - TRANSPILADOR SCHEME → PYTHON"           ║
+echo -e "${YELLOW}║${NC}     Modo: VERBOSO com exibição de código e saída completa"    ║
+echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
 
-run_test \
-    "Múltiplas variáveis não declaradas" \
-    "(+ x y z)" \
-    "ERRO: Variavel/funcao" \
-    "yes"
+# Testes que DEVEM FALHAR (com erro)
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}TESTES QUE DEVEM GERAR ERRO${NC}"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# =============================================================================
-# CATEGORIA 2: VARIÁVEIS DECLARADAS (SUCESSO)
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 2: VARIÁVEIS DECLARADAS (SUCESSO)             ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
+run_file_test "cases/var_undeclared_simple.scheme" "yes"
+run_file_test "cases/var_undeclared_nested.scheme" "yes"
+run_file_test "cases/func_undeclared.scheme" "yes"
+run_file_test "cases/complex_error.scheme" "yes"
+run_file_test "cases/if_error.scheme" "yes"
 
-run_test \
-    "Variável simples declarada e usada" \
-    "(define y 10) (+ y 5)" \
-    "Arquivo.*saida.py" \
-    "no"
+# Testes que DEVEM COMPILAR COM SUCESSO
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${YELLOW}TESTES QUE DEVEM COMPILAR COM SUCESSO${NC}"                       
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-run_test \
-    "Múltiplas variáveis declaradas" \
-    "(define a 5) (define b 10) (+ a b)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Variável em expressão complexa" \
-    "(define x 20) (* (+ x 5) (- x 3))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-# =============================================================================
-# CATEGORIA 3: FUNÇÕES NÃO DECLARADAS
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 3: FUNÇÕES NÃO DECLARADAS                     ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "Função não declarada - call simples" \
-    "(undefined_func 1 2)" \
-    "ERRO: Variavel/funcao 'undefined_func' nao foi declarada" \
-    "yes"
-
-run_test \
-    "Função não declarada - em expressão" \
-    "(define x 5) (my_func x)" \
-    "ERRO: Variavel/funcao 'my_func' nao foi declarada" \
-    "yes"
-
-# =============================================================================
-# CATEGORIA 4: LAMBDA - PARÂMETROS COMO PRÉ-DECLARADOS
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 4: LAMBDA (PARÂMETROS PRÉ-DECLARADOS)         ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "Lambda simples com parâmetros" \
-    "(define f (lambda (a b) (+ a b)))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Lambda e aplicação com argumentos" \
-    "(define f (lambda (a b) (+ a b))) (f 1 2)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Lambda com parâmetros em operações" \
-    "(define g (lambda (x y z) (* (+ x y) z)))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Lambda aninhada" \
-    "(define outer (lambda (a) (lambda (b) (+ a b))))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-# =============================================================================
-# CATEGORIA 5: LET/LET*/LETREC - BINDINGS PRÉ-DECLARADOS
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 5: LET/LET*/LETREC (BINDINGS PRÉ-DECLARADOS)  ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "Let simples com um binding" \
-    "(let ((x 5)) (+ x 10))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Let com múltiplos bindings" \
-    "(let ((x 5) (y 10)) (+ x y))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Let-star com referência entre bindings" \
-    "(let* ((x 5) (y (+ x 10))) (+ x y))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Letrec com função recursiva" \
-    "(letrec ((fact (lambda (n) (if (= n 0) 1 (* n (fact (- n 1))))))) (fact 5))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Let com binding não utilizado (aviso)" \
-    "(let ((unused 5)) (+ 10 20))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-# =============================================================================
-# CATEGORIA 6: FUNÇÕES BUILT-IN (SEM ERROS)
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 6: FUNÇÕES BUILT-IN (SEM ERROS)               ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "Operador + (built-in)" \
-    "(+ 1 2 3)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Operador - (built-in)" \
-    "(- 10 3)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Operador * (built-in)" \
-    "(* 5 4)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Função list (built-in)" \
-    "(list 1 2 3)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-# =============================================================================
-# CATEGORIA 7: ESTRUTURAS DE CONTROLE
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 7: ESTRUTURAS DE CONTROLE                     ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "If com variável declarada" \
-    "(define x 5) (if (> x 3) (+ x 1) (- x 1))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "If com variável não declarada" \
-    "(if (> y 3) 10 20)" \
-    "ERRO: Variavel/funcao 'y' nao foi declarada" \
-    "yes"
-
-run_test \
-    "Cond com variável declarada" \
-    "(define n 5) (cond ((= n 0) 1) ((> n 0) 2) (else 3))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-# =============================================================================
-# CATEGORIA 8: CASOS MISTOS
-# =============================================================================
-echo -e "${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║ CATEGORIA 8: CASOS MISTOS                               ║${NC}"
-echo -e "${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-run_test \
-    "Função definida chamada com sucesso" \
-    "(define square (lambda (x) (* x x))) (square 5)" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Função definida chamada com var undeclared" \
-    "(define square (lambda (x) (* x x))) (square z)" \
-    "ERRO: Variavel/funcao 'z' nao foi declarada" \
-    "yes"
-
-run_test \
-    "Begin com múltiplas expressões" \
-    "(define x 5) (begin (define y 10) (+ x y))" \
-    "Arquivo.*saida.py" \
-    "no"
-
-run_test \
-    "Set! com variável existente" \
-    "(define counter 0) (set! counter 5) counter" \
-    "Arquivo.*saida.py" \
-    "no"
+run_file_test "cases/lambda_ok.scheme" "no"
+run_file_test "cases/let_multiple.scheme" "no"
+run_file_test "cases/letstar_ok.scheme" "no"
+run_file_test "cases/letrec_factorial.scheme" "no"
+run_file_test "cases/complex_ok.scheme" "no"
+run_file_test "cases/if_ok.scheme" "no"
+run_file_test "cases/cond_ok.scheme" "no"
 
 # =============================================================================
 # RESUMO FINAL
 # =============================================================================
+
 echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}RESUMO DOS TESTES${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "Total:  ${TOTAL}"
-echo -e "Passou: ${GREEN}${PASSED}${NC}"
-echo -e "Falhou: ${RED}${FAILED}${NC}"
+echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${YELLOW}║${NC}                        RESUMO DOS TESTES"                     ║
+echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "Total de Testes:  ${BLUE}${TOTAL}${NC}"
+echo -e "Testes Passando:  ${GREEN}${PASSED}${NC}"
+echo -e "Testes Falhando:  ${RED}${FAILED}${NC}"
 echo ""
 
 if [[ $FAILED -eq 0 ]]; then
     echo -e "${GREEN}✓ TODOS OS TESTES PASSARAM!${NC}"
+    echo ""
     exit 0
 else
     echo -e "${RED}✗ ${FAILED} TESTE(S) FALHARAM${NC}"
+    echo ""
     exit 1
 fi

@@ -1,0 +1,10 @@
+; Teste: Letrec com função recursiva (deve compilar)
+; Esperado: Arquivo saida.py gerado com sucesso
+; Letrec permite que funções se auto-referenciem
+
+(letrec ((factorial
+          (lambda (n)
+            (if (= n 0)
+              1
+              (* n (factorial (- n 1)))))))
+  (factorial 5))

@@ -1,0 +1,6 @@
+; Teste: Função não declarada
+; Esperado: ERRO - função 'unknown_func' não declarada na linha 5
+
+(define x 100)
+(define y 50)
+(define z (unknown_func x y))

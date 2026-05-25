@@ -1,0 +1,10 @@
+; Teste: Lambda com parâmetros (deve compilar com sucesso)
+; Esperado: Arquivo saida.py gerado com sucesso
+; Os parâmetros (a, b, c) são automaticamente considerados declarados
+
+(define lambda-sum
+  (lambda (a b c)
+    (+ a b c)))
+
+(define result1 (lambda-sum 1 2 3))
+(define result2 (lambda-sum 10 20 30))
