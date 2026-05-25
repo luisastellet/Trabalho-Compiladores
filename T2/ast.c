@@ -107,7 +107,7 @@ ast_node *create_lambda(ast_node_list *parametros, ast_node *corpo) {
     return node;
 }
 
-ast_node *create_let(ast_node_list *bindings, ast_node *corpo) {
+ast_node *create_let(ast_node_list *bindings, ast_node *corpo, int is_letrec) {
     extern int yylineno;
     ast_node *node = (ast_node *)malloc(sizeof(ast_node));
     node->type = NODE_LET;
@@ -115,6 +115,7 @@ ast_node *create_let(ast_node_list *bindings, ast_node *corpo) {
     node->linha = yylineno;
     node->data.let_node.bindings = bindings;
     node->data.let_node.corpo = corpo;
+    node->data.let_node.is_letrec = is_letrec;
     return node;
 }
 
@@ -320,6 +321,19 @@ char *codegen_args(ast_node_list *args, char *sep) {
     return code;
 }
 
+/* Função auxiliar: sanitizar identificadores para Python (hífen → underscore) */
+char *sanitize_identifier(const char *name) {
+    if (name == NULL) return NULL;
+    
+    char *sanitized = strdup(name);
+    for (int i = 0; sanitized[i] != '\0'; i++) {
+        if (sanitized[i] == '-') {
+            sanitized[i] = '_';
+        }
+    }
+    return sanitized;
+}
+
 /* Função principal de geração de código */
 char *codegen(ast_node *node) {
     if (node == NULL) return strdup("");
@@ -338,9 +352,11 @@ char *codegen(ast_node *node) {
             sprintf(result, "\"%s\"", node->data.valor_str);
             break;
             
-        case NODE_ID:
-            result = strdup(node->data.id.nome);
+        case NODE_ID: {
+            char *sanitized = sanitize_identifier(node->data.id.nome);
+            result = sanitized;
             break;
+        }
             
         case NODE_BINOP: {
             char *left = codegen(node->data.binop.left);
@@ -366,19 +382,23 @@ char *codegen(ast_node *node) {
         
         case NODE_CALL: {
             char *args_code = codegen_args(node->data.call.argumentos, ", ");
+            char *func_sanitized = sanitize_identifier(node->data.call.funcao);
             
-            result = malloc(strlen(node->data.call.funcao) + strlen(args_code) + 3);
-            sprintf(result, "%s(%s)", node->data.call.funcao, args_code);
+            result = malloc(strlen(func_sanitized) + strlen(args_code) + 3);
+            sprintf(result, "%s(%s)", func_sanitized, args_code);
             free(args_code);
+            free(func_sanitized);
             break;
         }
         
         case NODE_DEFINE: {
             char *valor = codegen(node->data.define.valor);
+            char *var_sanitized = sanitize_identifier(node->data.define.variavel);
             
-            result = malloc(strlen(node->data.define.variavel) + strlen(valor) + 5);
-            sprintf(result, "%s = %s", node->data.define.variavel, valor);
+            result = malloc(strlen(var_sanitized) + strlen(valor) + 5);
+            sprintf(result, "%s = %s", var_sanitized, valor);
             free(valor);
+            free(var_sanitized);
             break;
         }
         
@@ -409,8 +429,12 @@ char *codegen(ast_node *node) {
         
         case NODE_LET: {
             /* (let ((x 1) (y 2)) corpo) 
-               Tradução para Python: usando função anônima imediata
+               Tradução para Python: usando função anônima imediata (lambda)
                (lambda x, y: corpo)(1, 2)
+               
+               (letrec ((f (lambda ...))) corpo)
+               Tradução para Python: usando 'def' para permitir recursão
+               def f(...): ... ; corpo
             */
             if (node->data.let_node.bindings == NULL) {
                 char *corpo = codegen(node->data.let_node.corpo);
@@ -418,41 +442,105 @@ char *codegen(ast_node *node) {
                 break;
             }
             
-            /* Extrai nomes e valores das bindings */
-            char nomes[1024];
-            char valores[1024];
-            nomes[0] = '\0';
-            valores[0] = '\0';
+            /* Verificar se é letrec com lambda recursivo */
+            int is_letrec = node->data.let_node.is_letrec;
             
-            ast_node_list *binding = node->data.let_node.bindings;
-            int primeira = 1;
-            
-            while (binding != NULL && binding->node != NULL) {
-                /* Cada binding é um nó NODE_DEFINE que contém (variavel, valor) */
-                if (binding->node->type == NODE_DEFINE) {
-                    if (!primeira) {
-                        strcat(nomes, ", ");
-                        strcat(valores, ", ");
+            if (is_letrec) {
+                /* LETREC: gera 'def' statements */
+                char defs[2048];
+                defs[0] = '\0';
+                
+                ast_node_list *binding = node->data.let_node.bindings;
+                while (binding != NULL && binding->node != NULL) {
+                    if (binding->node->type == NODE_DEFINE) {
+                        char *var_sanitized = sanitize_identifier(binding->node->data.define.variavel);
+                        
+                        /* Se o valor é um lambda, converte para def */
+                        if (binding->node->data.define.valor && 
+                            binding->node->data.define.valor->type == NODE_LAMBDA) {
+                            
+                            ast_node *lambda_node = binding->node->data.define.valor;
+                            char *params = codegen_args(lambda_node->data.lambda.parametros, ", ");
+                            char *corpo_lambda = codegen(lambda_node->data.lambda.corpo);
+                            
+                            char def_line[1024];
+                            snprintf(def_line, sizeof(def_line), "def %s(%s):\n    return %s\n",
+                                     var_sanitized, params, corpo_lambda);
+                            strcat(defs, def_line);
+                            
+                            free(params);
+                            free(corpo_lambda);
+                        } else {
+                            /* Caso não-lambda, trata como atribuição normal */
+                            char *valor_code = codegen(binding->node->data.define.valor);
+                            char assign_line[512];
+                            snprintf(assign_line, sizeof(assign_line), "%s = %s\n",
+                                     var_sanitized, valor_code);
+                            strcat(defs, assign_line);
+                            free(valor_code);
+                        }
+                        
+                        free(var_sanitized);
                     }
-                    primeira = 0;
-                    
-                    strcat(nomes, binding->node->data.define.variavel);
-                    
-                    char *valor_code = codegen(binding->node->data.define.valor);
-                    strcat(valores, valor_code);
-                    free(valor_code);
+                    binding = binding->next;
                 }
-                binding = binding->next;
-            }
-            
-            char *corpo = codegen(node->data.let_node.corpo);
-            
-            /* Gera: (lambda nome1, nome2: corpo)(valor1, valor2) */
-            if (strlen(nomes) > 0 && strlen(valores) > 0) {
-                result = malloc(strlen(nomes) + strlen(valores) + strlen(corpo) + 30);
-                sprintf(result, "(lambda %s: %s)(%s)", nomes, corpo, valores);
+                
+                /* Gera o corpo (última expressão) */
+                char *corpo_expr = codegen(node->data.let_node.corpo);
+                
+                result = malloc(strlen(defs) + strlen(corpo_expr) + 10);
+                sprintf(result, "%s%s", defs, corpo_expr);
+                free(corpo_expr);
+                
             } else {
-                result = corpo;
+                /* LET: gera lambda function */
+                /* Extrai nomes e valores das bindings */
+                char nomes[1024];
+                char valores[1024];
+                nomes[0] = '\0';
+                valores[0] = '\0';
+                
+                ast_node_list *binding = node->data.let_node.bindings;
+                int primeira = 1;
+                
+                while (binding != NULL && binding->node != NULL) {
+                    /* Cada binding é um nó NODE_DEFINE que contém (variavel, valor) */
+                    if (binding->node->type == NODE_DEFINE) {
+                        if (!primeira) {
+                            strcat(nomes, ", ");
+                            strcat(valores, ", ");
+                        }
+                        primeira = 0;
+                        
+                        char *var_sanitized = sanitize_identifier(binding->node->data.define.variavel);
+                        strcat(nomes, var_sanitized);
+                        free(var_sanitized);
+                        
+                        char *valor_code = codegen(binding->node->data.define.valor);
+                        strcat(valores, valor_code);
+                        free(valor_code);
+                    }
+                    binding = binding->next;
+                }
+                
+                char *corpo = codegen(node->data.let_node.corpo);
+                
+                /* Se o corpo é um NODE_DEFINE, extrai apenas a expressão (sem a atribuição) */
+                char *corpo_expr = corpo;
+                if (node->data.let_node.corpo && node->data.let_node.corpo->type == NODE_DEFINE) {
+                    /* NODE_DEFINE gera "var = expr", mas dentro de lambda precisamos apenas "expr" */
+                    char *valor_define = codegen(node->data.let_node.corpo->data.define.valor);
+                    free(corpo);
+                    corpo_expr = valor_define;
+                }
+                
+                /* Gera: (lambda nome1, nome2: corpo)(valor1, valor2) */
+                if (strlen(nomes) > 0 && strlen(valores) > 0) {
+                    result = malloc(strlen(nomes) + strlen(valores) + strlen(corpo_expr) + 30);
+                    sprintf(result, "(lambda %s: %s)(%s)", nomes, corpo_expr, valores);
+                } else {
+                    result = corpo_expr;
+                }
             }
             
             break;

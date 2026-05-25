@@ -25,6 +25,9 @@ TOTAL=0
 PASSED=0
 FAILED=0
 
+# Criar pasta de outputs se não existir
+mkdir -p outputs
+
 # Helper: exibir número de linhas
 show_code_with_lines() {
     local file="$1"
@@ -102,6 +105,12 @@ run_file_test() {
         if [[ "$exit_code" == "0" ]]; then
             echo -e "${GREEN} PASSOU${NC} (compilação bem-sucedida)"
             PASSED=$((PASSED + 1))
+            
+            # Salvar arquivo Python gerado
+            if [[ -f "saida.py" ]]; then
+                cp "saida.py" "outputs/${test_name}.py"
+                echo -e "${GRAY}  → Salvo em: ${BLUE}outputs/${test_name}.py${NC}${GRAY}${NC}"
+            fi
         else
             echo -e "${RED} FALHOU${NC} (compilação falhou inesperadamente)"
             FAILED=$((FAILED + 1))
@@ -166,9 +175,78 @@ echo ""
 if [[ $FAILED -eq 0 ]]; then
     echo -e "${GREEN}✓ TODOS OS TESTES PASSARAM!${NC}"
     echo ""
-    exit 0
 else
     echo -e "${RED}✗ ${FAILED} TESTE(S) FALHARAM${NC}"
+    echo ""
+    exit 1
+fi
+
+# =============================================================================
+# VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS
+# =============================================================================
+
+echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${YELLOW}║${NC}          VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS"      ║
+echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+if [ ! -d "outputs" ] || [ -z "$(ls -A outputs/*.py 2>/dev/null)" ]; then
+    echo -e "${YELLOW}⚠ Nenhum arquivo Python foi gerado${NC}"
+    echo ""
+    exit 0
+fi
+
+PYTHON_VALID=0
+PYTHON_INVALID=0
+
+for py_file in outputs/*.py; do
+    filename=$(basename "$py_file")
+    if python3 -m py_compile "$py_file" 2>/dev/null; then
+        echo -e "${GREEN}✓${NC} $filename"
+        PYTHON_VALID=$((PYTHON_VALID + 1))
+    else
+        echo -e "${RED}✗${NC} $filename (erro de sintaxe Python)"
+        PYTHON_INVALID=$((PYTHON_INVALID + 1))
+    fi
+done
+
+echo ""
+echo -e "Arquivos Python:  ${BLUE}$((PYTHON_VALID + PYTHON_INVALID))${NC}"
+echo -e "Sintaxe Válida:   ${GREEN}${PYTHON_VALID}${NC}"
+echo -e "Sintaxe Inválida: ${RED}${PYTHON_INVALID}${NC}"
+echo ""
+
+if [[ $PYTHON_INVALID -eq 0 ]]; then
+    echo -e "${GREEN}✓ TODOS OS ARQUIVOS PYTHON TÊM SINTAXE VÁLIDA!${NC}"
+    echo ""
+    
+    # =======================================================================
+    # EXECUTAR OS ARQUIVOS PYTHON GERADOS E MOSTRAR RESULTADOS
+    # =======================================================================
+    
+    echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║${NC}              EXECUÇÃO DOS ARQUIVOS PYTHON GERADOS"              ║
+    echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    
+    for py_file in outputs/*.py; do
+        filename=$(basename "$py_file")
+        echo -e "${BLUE}▶ $filename${NC}"
+        echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+        
+        if python3 "$py_file" 2>&1; then
+            echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+            echo ""
+        else
+            echo -e "${RED}(erro ao executar)${NC}"
+            echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+            echo ""
+        fi
+    done
+    
+    exit 0
+else
+    echo -e "${RED}✗ ${PYTHON_INVALID} ARQUIVO(S) COM ERRO DE SINTAXE${NC}"
     echo ""
     exit 1
 fi

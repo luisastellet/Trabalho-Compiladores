@@ -15,6 +15,7 @@ symrec *putsym(char const *name, int type) {
     ptr->value.var = 0;
     ptr->linha_declaracao = yylineno;
     ptr->foi_usado = 0;
+    ptr->foi_usado_como = 0;
     ptr->eh_builtin = 0;  /* Por padrão, não é built-in */
     ptr->foi_declarado = 0;  /* Por padrão, não foi declarado ainda */
     ptr->next = sym_table;
@@ -58,7 +59,12 @@ void verificar_nao_utilizados(void) {
 }
 
 void relatorio_erro_nao_declarado(const char *name, int linha) {
-    fprintf(stderr, "ERRO: Variavel/funcao '%s' nao foi declarada (usada na linha %d)\n", name, linha);
+    symrec *s = getsym(name);
+    if (s && s->foi_usado_como == 2) {
+        fprintf(stderr, "ERRO: Funcao '%s' nao foi declarada (usada na linha %d)\n", name, linha);
+    } else {
+        fprintf(stderr, "ERRO: Variavel '%s' nao foi declarada (usada na linha %d)\n", name, linha);
+    }
 }
 
 

@@ -167,6 +167,7 @@ comando_lista:
         }
         
         marcar_como_usado($1->name);  /* Marca identificador como usado */
+        s->foi_usado_como = 2;  /* Marca como função */
         
         /* 1. OPERADORES ARITMÉTICOS INFIXOS */
         if (strcmp($1->name, "+") == 0 || strcmp($1->name, "-") == 0 || 
@@ -249,7 +250,7 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5);
+        $$ = create_let($3, $5, 0);  /* 0 = let (não letrec) */
     }
     
     /* --- LET* --- */
@@ -266,12 +267,14 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5);
+        $$ = create_let($3, $5, 0);  /* 0 = let (não letrec) */
     }
     
     /* --- LETREC --- */
     | TOKEN_LETREC TOKEN_LPAREN binding_list TOKEN_RPAREN expressao {
-        /* (letrec ((x 1) (y 2)) corpo) - similar ao let por enquanto */
+        /* (letrec ((x 1) (y 2)) corpo)
+           Será traduzido para 'def' em Python para permitir recursão
+        */
         /* Marca variáveis de binding como declaradas */
         ast_node_list *binding = $3;
         while (binding != NULL) {
@@ -283,7 +286,7 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5);
+        $$ = create_let($3, $5, 1);  /* 1 = letrec */
     }
     
     /* --- COND --- */
@@ -381,12 +384,10 @@ int main() {
         return 1;
     }
 
-    printf("Convertendo Scheme para Python...\n");
     int result = yyparse();
     
     if (result == 0) {
-        printf("Arquivo 'saida.py' gerado com sucesso!\n");
-        
+
         /* Verifica se variáveis foram usadas mas não foram declaradas com define */
         int erros = 0;
         for (symrec *p = sym_table; p != NULL; p = p->next) {
@@ -401,6 +402,7 @@ int main() {
             printf("Erro na compilacao\n");
         } else {
             verificar_nao_utilizados();  /* Verifica e reporta variáveis/funções não usadas */
+            printf("Arquivo 'saida.py' gerado com sucesso!\n");
         }
     } else {
         printf("Erro na compilação\n");

@@ -20,6 +20,7 @@ typedef struct symrec {                         /* Estrutura do Symbol Record*/
     union content value;                        /* Valor do conteúdo, pela lógica do union pode ser de fato uma variável, ou uma função */
     int linha_declaracao;                       /* Linha onde foi declarado */
     int foi_usado;                              /* 1 se foi usado, 0 se não */
+    int foi_usado_como;                         /* 0=não, 1=variável, 2=função */
     int eh_builtin;                             /* 1 se é built-in do Scheme, 0 se é definido pelo usuário */
     int foi_declarado;                          /* 1 se foi declarado com define ou é parâmetro, 0 se apenas criado por referência */
     struct symrec *next;                        /* Ponteiro para o próximo Símbolo, já que é uma LSE */
@@ -136,6 +137,7 @@ typedef struct ast_node {
         struct {
             ast_node_list *bindings;    /* LSE de (nome, valor) */
             struct ast_node *corpo;
+            int is_letrec;              /* 1 se for letrec, 0 se for let */
         } let_node;
         
         /* NODE_BEGIN */
@@ -183,7 +185,7 @@ ast_node *create_call(char *funcao, ast_node_list *argumentos);
 ast_node *create_define(char *variavel, ast_node *valor);
 ast_node *create_if(ast_node *condicao, ast_node *then_br, ast_node *else_br);
 ast_node *create_lambda(ast_node_list *parametros, ast_node *corpo);
-ast_node *create_let(ast_node_list *bindings, ast_node *corpo);
+ast_node *create_let(ast_node_list *bindings, ast_node *corpo, int is_letrec);
 ast_node *create_begin(ast_node_list *expressoes);
 ast_node *create_set(char *variavel, ast_node *valor);
 ast_node *create_cond(ast_node_list *clausulas);
