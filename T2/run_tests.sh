@@ -51,7 +51,7 @@ run_file_test() {
     
     echo ""
     echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║${NC} Teste #${TOTAL}: ${test_name}"                                ║
+    echo -e "${YELLOW}║${NC} Teste #${TOTAL}: ${test_name}"                                
     echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     
@@ -130,8 +130,8 @@ if [ ! -d "cases" ]; then
 fi
 
 echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║${NC}     SUITE DE TESTES - TRANSPILADOR SCHEME → PYTHON"           ║
-echo -e "${YELLOW}║${NC}     Modo: VERBOSO com exibição de código e saída completa"    ║
+echo -e "${YELLOW}║${NC}     SUITE DE TESTES - TRANSPILADOR SCHEME → PYTHON"           
+echo -e "${YELLOW}║${NC}     Modo: VERBOSO com exibição de código e saída completa"    
 echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
 
 # Testes que DEVEM FALHAR (com erro)
@@ -164,7 +164,7 @@ run_file_test "cases/cond_ok.scheme" "no"
 
 echo ""
 echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║${NC}                        RESUMO DOS TESTES"                     ║
+echo -e "${YELLOW}║${NC}                        RESUMO DOS TESTES"                     
 echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "Total de Testes:  ${BLUE}${TOTAL}${NC}"
@@ -173,10 +173,10 @@ echo -e "Testes Falhando:  ${RED}${FAILED}${NC}"
 echo ""
 
 if [[ $FAILED -eq 0 ]]; then
-    echo -e "${GREEN}✓ TODOS OS TESTES PASSARAM!${NC}"
+    echo -e "${GREEN} TODOS OS TESTES PASSARAM!${NC}"
     echo ""
 else
-    echo -e "${RED}✗ ${FAILED} TESTE(S) FALHARAM${NC}"
+    echo -e "${RED} ${FAILED} TESTE(S) FALHARAM${NC}"
     echo ""
     exit 1
 fi
@@ -186,12 +186,12 @@ fi
 # =============================================================================
 
 echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║${NC}          VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS"      ║
+echo -e "${YELLOW}║${NC}          VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS"      
 echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 if [ ! -d "outputs" ] || [ -z "$(ls -A outputs/*.py 2>/dev/null)" ]; then
-    echo -e "${YELLOW}⚠ Nenhum arquivo Python foi gerado${NC}"
+    echo -e "${YELLOW} Nenhum arquivo Python foi gerado${NC}"
     echo ""
     exit 0
 fi
@@ -202,10 +202,10 @@ PYTHON_INVALID=0
 for py_file in outputs/*.py; do
     filename=$(basename "$py_file")
     if python3 -m py_compile "$py_file" 2>/dev/null; then
-        echo -e "${GREEN}✓${NC} $filename"
+        echo -e "${GREEN} ${NC} $filename"
         PYTHON_VALID=$((PYTHON_VALID + 1))
     else
-        echo -e "${RED}✗${NC} $filename (erro de sintaxe Python)"
+        echo -e "${RED} ${NC} $filename (erro de sintaxe Python)"
         PYTHON_INVALID=$((PYTHON_INVALID + 1))
     fi
 done
@@ -225,7 +225,7 @@ if [[ $PYTHON_INVALID -eq 0 ]]; then
     # =======================================================================
     
     echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║${NC}              EXECUÇÃO DOS ARQUIVOS PYTHON GERADOS"              ║
+    echo -e "${YELLOW}║${NC}              EXECUÇÃO DOS ARQUIVOS PYTHON GERADOS"              
     echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     
