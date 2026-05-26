@@ -45,15 +45,6 @@ ast.o: ast.c scheme.h
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) -lm
 
-# Testes simples
-test: $(TARGET)
-	@echo "Teste 1: Adição simples"
-	@echo "(+ 1 2)" | ./$(TARGET) && cat saida.py
-	@echo "\nTeste 2: Variável"
-	@echo "(define x 5)" | ./$(TARGET) && cat saida.py
-	@echo "\nTeste 3: Operação aninhada"
-	@echo "(+ 1 2 (funcao 1 2))" | ./$(TARGET) && cat saida.py
-
 # Limpeza
 clean:
 	rm -f $(FLEX_OUT) $(BISON_OUT) $(BISON_HEADER)
