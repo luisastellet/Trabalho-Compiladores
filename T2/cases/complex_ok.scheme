@@ -18,3 +18,5 @@
         (n2 20))
     (+ (square n1)
        (apply-op 1 n1 n2))))
+
+(display combined-result)

@@ -110,6 +110,55 @@ run_file_test() {
             if [[ -f "saida.py" ]]; then
                 cp "saida.py" "outputs/${test_name}.py"
                 echo -e "${GRAY}  → Salvo em: ${BLUE}outputs/${test_name}.py${NC}${GRAY}${NC}"
+                
+                # Executar o Scheme original com Racket
+                echo ""
+                echo -e "${BLUE} Executando Scheme original (Racket):${NC}"
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+                
+                # Criar um arquivo temporário com #lang racket no início
+                temp_racket_file=$(mktemp)
+                echo "#lang racket" > "$temp_racket_file"
+                cat "$test_file" >> "$temp_racket_file"
+                
+                racket_output=$(racket "$temp_racket_file" 2>&1)
+                racket_exit=$?
+                rm -f "$temp_racket_file"
+                
+                if [[ $racket_exit -eq 0 ]]; then
+                    echo -e "${GREEN}$racket_output${NC}"
+                else
+                    echo -e "${RED}$racket_output${NC}"
+                fi
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+                
+                # Executar o Python gerado
+                echo ""
+                echo -e "${BLUE} Executando Python transpilado:${NC}"
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+                python_output=$(python3 "outputs/${test_name}.py" 2>&1)
+                python_exit=$?
+                if [[ $python_exit -eq 0 ]]; then
+                    echo -e "${GREEN}$python_output${NC}"
+                else
+                    echo -e "${RED}$python_output${NC}"
+                fi
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+                
+                # Comparar outputs
+                echo ""
+                echo -e "${BLUE} Validação - Comparando outputs:${NC}"
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
+                if [[ "$racket_output" == "$python_output" ]]; then
+                    echo -e "${GREEN}✓ Outputs são IDÊNTICOS!${NC}"
+                    echo -e "${GRAY}  Scheme: $racket_output${NC}"
+                    echo -e "${GRAY}  Python: $python_output${NC}"
+                else
+                    echo -e "${RED}✗ Outputs DIFEREM!${NC}"
+                    echo -e "${RED}  Scheme: $racket_output${NC}"
+                    echo -e "${RED}  Python: $python_output${NC}"
+                fi
+                echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
             fi
         else
             echo -e "${RED} FALHOU${NC} (compilação falhou inesperadamente)"
@@ -223,26 +272,6 @@ if [[ $PYTHON_INVALID -eq 0 ]]; then
     # =======================================================================
     # EXECUTAR OS ARQUIVOS PYTHON GERADOS E MOSTRAR RESULTADOS
     # =======================================================================
-    
-    echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║${NC}              EXECUÇÃO DOS ARQUIVOS PYTHON GERADOS"              
-    echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    
-    for py_file in outputs/*.py; do
-        filename=$(basename "$py_file")
-        echo -e "${BLUE}▶ $filename${NC}"
-        echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
-        
-        if python3 "$py_file" 2>&1; then
-            echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
-            echo ""
-        else
-            echo -e "${RED}(erro ao executar)${NC}"
-            echo -e "${GRAY}────────────────────────────────────────────────────${NC}"
-            echo ""
-        fi
-    done
     
     exit 0
 else

@@ -389,8 +389,16 @@ char *codegen(ast_node *node) {
             char *args_code = codegen_args(node->data.call.argumentos, ", ");
             char *func_sanitized = sanitize_identifier(node->data.call.funcao);
             
-            result = malloc(strlen(func_sanitized) + strlen(args_code) + 3);
-            sprintf(result, "%s(%s)", func_sanitized, args_code);
+            /* Tratamento especial para 'print' (traduzido de 'display')
+               display em Scheme NÃO adiciona quebra de linha, ao contrário de print() em Python */
+            if (strcmp(node->data.call.funcao, "print") == 0) {
+                result = malloc(strlen(func_sanitized) + strlen(args_code) + 20);
+                sprintf(result, "%s(%s, end='')", func_sanitized, args_code);
+            } else {
+                result = malloc(strlen(func_sanitized) + strlen(args_code) + 3);
+                sprintf(result, "%s(%s)", func_sanitized, args_code);
+            }
+            
             free(args_code);
             free(func_sanitized);
             break;
@@ -547,62 +555,71 @@ char *codegen(ast_node *node) {
                 break;
             }
             
-            /* Processa cláusulas em ordem reversa para gerar ternários aninhados corretos */
+            /* Primeiro: conta as cláusulas e coloca em um array para processar de trás para frente */
             ast_node_list *clausulas = node->data.cond.clausulas;
-            ast_node_list *temp = NULL;
-            ast_node *ultima_clausula = NULL;
+            int num_clausulas = 0;
+            ast_node_list *temp = clausulas;
             
-            /* Percorre até o final para processar de trás para frente */
-            if (clausulas != NULL) {
-                temp = clausulas;
-                while (temp->next != NULL) {
-                    temp = temp->next;
-                }
-                ultima_clausula = temp->node;
+            while (temp != NULL) {
+                num_clausulas++;
+                temp = temp->next;
             }
             
-            /* Se última cláusula é else (else sempre tem teste == NULL ou especial),
-               começamos com ela. Caso contrário, resultado final é None */
-            if (ultima_clausula != NULL && ultima_clausula->type == NODE_COND_CLAUSE) {
-                char *teste = codegen(ultima_clausula->data.cond_clause.teste);
-                char *resultado = codegen(ultima_clausula->data.cond_clause.resultado);
-                
-                /* Verifica se é else (teste pode ser "else" ou NULL) */
-                int is_else = (ultima_clausula->data.cond_clause.teste->type == NODE_ID &&
-                    strcmp(((ast_node *)ultima_clausula->data.cond_clause.teste)->data.id.nome, "else") == 0);
-                
-                if (is_else) {
-                    /* Realmente é else, resultado é o else */
-                    result = resultado;
-                    free(teste);
-                } else {
-                    /* Não é else, primeiro ternário */
-                    result = malloc(strlen(resultado) + strlen(teste) + 15);
-                    sprintf(result, "%s if %s else None", resultado, teste);
-                    free(teste);
-                    free(resultado);
-                }
-                
-                /* Processa cláusulas anteriores, envolvendo em if/else */
-                temp = clausulas;
-                while (temp != NULL && temp->node != ultima_clausula) {
-                    if (temp->node->type == NODE_COND_CLAUSE) {
-                        char *t = codegen(temp->node->data.cond_clause.teste);
-                        char *r = codegen(temp->node->data.cond_clause.resultado);
-                        
-                        char *novo = malloc(strlen(r) + strlen(t) + strlen(result) + 15);
-                        sprintf(novo, "%s if %s else (%s)", r, t, result);
-                        
-                        free(t);
-                        free(r);
-                        free(result);
-                        result = novo;
-                    }
-                    temp = temp->next;
-                }
-            } else {
+            if (num_clausulas == 0) {
                 result = strdup("None");
+                break;
             }
+            
+            /* Array de ponteiros para as cláusulas */
+            ast_node **clauses = (ast_node **)malloc(num_clausulas * sizeof(ast_node *));
+            temp = clausulas;
+            for (int i = 0; i < num_clausulas; i++) {
+                clauses[i] = temp->node;
+                temp = temp->next;
+            }
+            
+            /* Processa de trás para frente (começando pela última) */
+            /* Verifica se última é else */
+            int last_is_else = 0;
+            if (clauses[num_clausulas - 1]->type == NODE_COND_CLAUSE) {
+                ast_node *teste_node = clauses[num_clausulas - 1]->data.cond_clause.teste;
+                if (teste_node->type == NODE_ID && 
+                    strcmp(teste_node->data.id.nome, "else") == 0) {
+                    last_is_else = 1;
+                }
+            }
+            
+            /* Começa com a última cláusula */
+            char *teste_str = codegen(clauses[num_clausulas - 1]->data.cond_clause.teste);
+            char *resultado_str = codegen(clauses[num_clausulas - 1]->data.cond_clause.resultado);
+            
+            if (last_is_else) {
+                result = resultado_str;
+                free(teste_str);
+            } else {
+                result = malloc(strlen(resultado_str) + strlen(teste_str) + 15);
+                sprintf(result, "%s if %s else None", resultado_str, teste_str);
+                free(teste_str);
+                free(resultado_str);
+            }
+            
+            /* Processa todas as cláusulas anteriores, de trás para frente */
+            for (int i = num_clausulas - 2; i >= 0; i--) {
+                if (clauses[i]->type == NODE_COND_CLAUSE) {
+                    char *t = codegen(clauses[i]->data.cond_clause.teste);
+                    char *r = codegen(clauses[i]->data.cond_clause.resultado);
+                    
+                    char *novo = malloc(strlen(r) + strlen(t) + strlen(result) + 15);
+                    sprintf(novo, "%s if %s else (%s)", r, t, result);
+                    
+                    free(t);
+                    free(r);
+                    free(result);
+                    result = novo;
+                }
+            }
+            
+            free(clauses);
             break;
         }
         

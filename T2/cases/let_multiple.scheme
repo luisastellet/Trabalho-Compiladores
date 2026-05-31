@@ -7,5 +7,4 @@
 (let ((x 10)
       (y 20)
       (z 30))
-  (define inner-result
-    (+ x y z outer-var)))
+  (display (+ x y z outer-var)))

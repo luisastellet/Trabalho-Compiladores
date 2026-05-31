@@ -10,3 +10,5 @@
     ((>= grade 70) "C")
     ((>= grade 60) "D")
     (else "F")))
+
+(display classification)

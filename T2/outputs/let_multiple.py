@@ -3,6 +3,6 @@ def _let_0():
     x = 10
     y = 20
     z = 30
-    return (((x + y) + z) + outer_var)
+    return print((((x + y) + z) + outer_var), end='')
 
 _let_0()
