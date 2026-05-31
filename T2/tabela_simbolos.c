@@ -88,25 +88,13 @@ void inicializar_tabela() {
     putsym("and",             TOKEN_AND);
     putsym("or",              TOKEN_OR);
     putsym("else",            TOKEN_ELSE); 
-    putsym("=>",              TOKEN_ARROW);  
-    
+        
     // Atribuição, Sequenciamento e Blocos
     putsym("begin",           TOKEN_BEGIN);
     putsym("set!",            TOKEN_SET_BANG); 
-    putsym("do",              TOKEN_DO);
-    putsym("delay",           TOKEN_DELAY);
     
     // Metaprogramação e Citações (Quotes)
     putsym("quote",           TOKEN_QUOTE_KEYWORD);
-    putsym("quasiquote",      TOKEN_QUASIQUOTE);
-    putsym("unquote",         TOKEN_UNQUOTE);
-    putsym("unquote-splicing", TOKEN_UNQUOTE_SPLICING);
-    
-    // Sistema de Macros R5RS
-    putsym("define-syntax",   TOKEN_DEFINE_SYNTAX);
-    putsym("let-syntax",      TOKEN_LET_SYNTAX);
-    putsym("letrec-syntax",   TOKEN_LETREC_SYNTAX);
-    putsym("syntax-rules",    TOKEN_SYNTAX_RULES);
 
 
     /* =========================================================================

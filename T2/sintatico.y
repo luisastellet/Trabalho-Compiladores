@@ -249,7 +249,7 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5, 0);  /* 0 = let (não letrec) */
+        $$ = create_let($3, $5);
     }
     
     /* --- LET* --- */
@@ -266,7 +266,7 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5, 0);  /* 0 = let (não letrec) */
+        $$ = create_let($3, $5);
     }
     
     /* --- LETREC --- */
@@ -285,7 +285,7 @@ comando_lista:
             }
             binding = binding->next;
         }
-        $$ = create_let($3, $5, 1);  /* 1 = letrec */
+        $$ = create_let($3, $5);
     }
     
     /* --- COND --- */

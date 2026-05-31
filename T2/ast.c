@@ -1,11 +1,17 @@
 #include "scheme.h"
 
+/* Acesso ao arquivo de saída Python (definido em sintatico.y) */
+extern FILE *arquivo_python;
+
 /* ============================================================================
    VARIÁVEIS GLOBAIS PARA TYPE CHECKING
    ============================================================================ */
 static int type_errors_count = 0;
 #define MAX_TYPE_ERRORS 100
 static char *type_error_messages[MAX_TYPE_ERRORS];
+
+/* Contador global para gerar nomes únicos de funções */
+static int func_counter = 0;
 
 
 
@@ -107,7 +113,7 @@ ast_node *create_lambda(ast_node_list *parametros, ast_node *corpo) {
     return node;
 }
 
-ast_node *create_let(ast_node_list *bindings, ast_node *corpo, int is_letrec) {
+ast_node *create_let(ast_node_list *bindings, ast_node *corpo) {
     extern int yylineno;
     ast_node *node = (ast_node *)malloc(sizeof(ast_node));
     node->type = NODE_LET;
@@ -115,7 +121,6 @@ ast_node *create_let(ast_node_list *bindings, ast_node *corpo, int is_letrec) {
     node->linha = yylineno;
     node->data.let_node.bindings = bindings;
     node->data.let_node.corpo = corpo;
-    node->data.let_node.is_letrec = is_letrec;
     return node;
 }
 
@@ -416,37 +421,38 @@ char *codegen(ast_node *node) {
         }
         
         case NODE_LAMBDA: {
-            /* (lambda (x y z) corpo) → lambda x, y, z: corpo */
+            /* (lambda (x y z) corpo) → def _lambda_N(x, y, z): return corpo
+               Retorna apenas o nome da função (não a chama)
+            */
+            char func_name[64];
+            snprintf(func_name, sizeof(func_name), "_lambda_%d", func_counter++);
+            
             char *params = codegen_args(node->data.lambda.parametros, ", ");
             char *corpo = codegen(node->data.lambda.corpo);
             
-            result = malloc(strlen(params) + strlen(corpo) + 15);
-            sprintf(result, "lambda %s: %s", params, corpo);
+            /* Gera a definição da função no arquivo de saída */
+            fprintf(arquivo_python, "def %s(%s):\n    return %s\n\n", func_name, params, corpo);
+            
+            /* Retorna apenas o nome da função */
+            result = malloc(strlen(func_name) + 1);
+            strcpy(result, func_name);
             free(params);
             free(corpo);
             break;
         }
         
         case NODE_LET: {
-            /* (let ((x 1) (y 2)) corpo) 
-               (let* ((x 1) (y (+ x 1))) corpo)
-               (letrec ((f (lambda ...))) corpo)
-               
-               Estratégia simplificada: SEMPRE usar def para lambdas e assignments para valores
-               - Para lambdas: def f(...): return ...
-               - Para valores: x = ...
-               - Depois executar: corpo
-               
-               Isso resolve:
-               1. Recursão em letrec (def permite self-reference)
-               2. Escopo sequencial em let* (assignments são sequenciais)
-               3. Consistência em let (mesmo tratamento)
+            /* (let ((x 1) (y 2)) corpo) → def _let_N(): x=1; y=2; return corpo
+                                               _let_N()
             */
             if (node->data.let_node.bindings == NULL) {
                 char *corpo = codegen(node->data.let_node.corpo);
                 result = corpo;
                 break;
             }
+            
+            char func_name[64];
+            snprintf(func_name, sizeof(func_name), "_let_%d", func_counter++);
             
             /* Gera statements (assignments e defs) para todas as bindings */
             char statements[4096];
@@ -466,7 +472,7 @@ char *codegen(ast_node *node) {
                         char *corpo_lambda = codegen(lambda_node->data.lambda.corpo);
                         
                         char def_line[1024];
-                        snprintf(def_line, sizeof(def_line), "def %s(%s):\n    return %s\n",
+                        snprintf(def_line, sizeof(def_line), "    def %s(%s):\n        return %s\n",
                                  var_sanitized, params, corpo_lambda);
                         strcat(statements, def_line);
                         
@@ -476,7 +482,7 @@ char *codegen(ast_node *node) {
                         /* Caso não-lambda, trata como atribuição normal */
                         char *valor_code = codegen(binding->node->data.define.valor);
                         char assign_line[512];
-                        snprintf(assign_line, sizeof(assign_line), "%s = %s\n",
+                        snprintf(assign_line, sizeof(assign_line), "    %s = %s\n",
                                  var_sanitized, valor_code);
                         strcat(statements, assign_line);
                         free(valor_code);
@@ -497,13 +503,13 @@ char *codegen(ast_node *node) {
                 corpo_expr = valor_define;
             }
             
-            /* Combina: statements + corpo */
-            if (strlen(statements) > 0) {
-                result = malloc(strlen(statements) + strlen(corpo_expr) + 10);
-                sprintf(result, "%s%s", statements, corpo_expr);
-            } else {
-                result = corpo_expr;
-            }
+            /* Escreve a função no arquivo de saída */
+            fprintf(arquivo_python, "def %s():\n%s    return %s\n\n", func_name, statements, corpo_expr);
+            
+            /* Retorna a chamada da função */
+            result = malloc(strlen(func_name) + 4);
+            sprintf(result, "%s()", func_name);
+            free(corpo_expr);
             
             break;
         }

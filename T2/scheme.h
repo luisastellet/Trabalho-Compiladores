@@ -185,7 +185,7 @@ ast_node *create_call(char *funcao, ast_node_list *argumentos);
 ast_node *create_define(char *variavel, ast_node *valor);
 ast_node *create_if(ast_node *condicao, ast_node *then_br, ast_node *else_br);
 ast_node *create_lambda(ast_node_list *parametros, ast_node *corpo);
-ast_node *create_let(ast_node_list *bindings, ast_node *corpo, int is_letrec);
+ast_node *create_let(ast_node_list *bindings, ast_node *corpo);
 ast_node *create_begin(ast_node_list *expressoes);
 ast_node *create_set(char *variavel, ast_node *valor);
 ast_node *create_cond(ast_node_list *clausulas);

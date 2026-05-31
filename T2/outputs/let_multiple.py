@@ -1,5 +1,8 @@
 outer_var = 1000
-x = 10
-y = 20
-z = 30
-(((x + y) + z) + outer_var)
+def _let_0():
+    x = 10
+    y = 20
+    z = 30
+    return (((x + y) + z) + outer_var)
+
+_let_0()
