@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# =============================================================================
-# SUITE DE TESTES DO TRANSPILADOR SCHEME → PYTHON (VERBOSE)
-# =============================================================================
-# Executa testes usando arquivos .scheme da pasta 'cases/'
-# Mostra todo o código, linha por linha
-# Exibe a saída completa do transpilador
-# Destaca claramente qual linha causou erro
-# =============================================================================
-
 set +e  # Permitir falhas para capturar exit codes
 
 # Cores para output
@@ -169,10 +160,6 @@ run_file_test() {
     echo ""
 }
 
-# =============================================================================
-# EXECUTAR TESTES DA PASTA 'cases/'
-# =============================================================================
-
 if [ ! -d "cases" ]; then
     echo -e "${RED}Erro: Pasta 'cases/' não encontrada!${NC}"
     exit 1
@@ -207,10 +194,6 @@ run_file_test "cases/complex_ok.scheme" "no"
 run_file_test "cases/if_ok.scheme" "no"
 run_file_test "cases/cond_ok.scheme" "no"
 
-# =============================================================================
-# RESUMO FINAL
-# =============================================================================
-
 echo ""
 echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${YELLOW}║${NC}                        RESUMO DOS TESTES"                     
@@ -229,10 +212,6 @@ else
     echo ""
     exit 1
 fi
-
-# =============================================================================
-# VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS
-# =============================================================================
 
 echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${YELLOW}║${NC}          VALIDAÇÃO DE SINTAXE PYTHON DOS ARQUIVOS GERADOS"      
@@ -268,10 +247,6 @@ echo ""
 if [[ $PYTHON_INVALID -eq 0 ]]; then
     echo -e "${GREEN}✓ TODOS OS ARQUIVOS PYTHON TÊM SINTAXE VÁLIDA!${NC}"
     echo ""
-    
-    # =======================================================================
-    # EXECUTAR OS ARQUIVOS PYTHON GERADOS E MOSTRAR RESULTADOS
-    # =======================================================================
     
     exit 0
 else

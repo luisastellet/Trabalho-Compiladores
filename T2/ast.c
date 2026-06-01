@@ -1,11 +1,7 @@
 #include "scheme.h"
 
-/* Acesso ao arquivo de saída Python (definido em sintatico.y) */
 extern FILE *arquivo_python;
 
-/* ============================================================================
-   VARIÁVEIS GLOBAIS PARA TYPE CHECKING
-   ============================================================================ */
 static int type_errors_count = 0;
 #define MAX_TYPE_ERRORS 100
 static char *type_error_messages[MAX_TYPE_ERRORS];
@@ -176,10 +172,6 @@ ast_node *create_quote(ast_node *quoted) {
     return node;
 }
 
-/* ============================================================================
-   GERENCIAMENTO DE LISTAS DE NÓS
-   ============================================================================ */
-
 ast_node_list *create_arg_node(ast_node *node) {
     ast_node_list *arg = (ast_node_list *)malloc(sizeof(ast_node_list));
     arg->node = node;
@@ -207,10 +199,6 @@ void free_arg_list(ast_node_list *lista) {
         free(temp);
     }
 }
-
-/* ============================================================================
-   DESALOCAÇÃO
-   ============================================================================ */
 
 void free_ast(ast_node *node) {
     if (node == NULL) return;
@@ -291,18 +279,12 @@ void free_ast(ast_node *node) {
     free(node);
 }
 
-/* ============================================================================
-   CODE GENERATION
-   ============================================================================ */
-
-/* Helper: converte operador Scheme para Python */
 char *translate_operator(char *op) {
     if (strcmp(op, "=") == 0) return "==";
     if (strcmp(op, "not") == 0) return "not";
     return op; /* Maioria dos operadores são iguais em Python */
 }
 
-/* Helper: gera Python para lista de argumentos com separador */
 char *codegen_args(ast_node_list *args, char *sep) {
     if (args == NULL) {
         char *result = malloc(1);
@@ -326,7 +308,6 @@ char *codegen_args(ast_node_list *args, char *sep) {
     return code;
 }
 
-/* Função auxiliar: sanitizar identificadores para Python (hífen → underscore) */
 char *sanitize_identifier(const char *name) {
     if (name == NULL) return NULL;
     
@@ -640,10 +621,6 @@ char *codegen(ast_node *node) {
     
     return result ? result : strdup("");
 }
-
-/* ============================================================================
-   TYPE CHECKING E ANÁLISE SEMÂNTICA
-   ============================================================================ */
 
 void report_type_error(const char *message, int linha) {
     if (type_errors_count < MAX_TYPE_ERRORS) {
