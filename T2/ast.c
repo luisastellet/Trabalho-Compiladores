@@ -325,7 +325,6 @@ char *codegen(ast_node *node) {
     if (node == NULL) return strdup("");
     
     char *result = NULL;
-    char buffer[256];
     
     switch (node->type) {
         case NODE_NUM:
@@ -644,8 +643,6 @@ int type_inference(ast_node *node) {
             /* Tipo de variável é desconhecido sem análise de contexto */
             return T_ANY;
         case NODE_BINOP: {
-            int left_type = type_inference(node->data.binop.left);
-            int right_type = type_inference(node->data.binop.right);
             char *op = node->data.binop.op;
             
             /* Operadores aritméticos retornam NUM */
